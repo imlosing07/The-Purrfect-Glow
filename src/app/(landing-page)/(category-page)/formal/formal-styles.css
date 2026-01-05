@@ -1,0 +1,185 @@
+/* Agregar al archivo globals.css o crear un archivo específico */
+
+/* Animaciones suaves */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
+
+/* Scrollbar personalizado para filtros */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Efecto parallax sutil en hero */
+@media (prefers-reduced-motion: no-preference) {
+  .parallax-bg {
+    transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .parallax-bg:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Hover effect premium en cards */
+.product-card-hover {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Gradient text effect */
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #e5e7eb 50%,
+    #ffffff 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 3s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Smooth scroll para toda la página */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus states mejorados */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+/* Transiciones suaves para imágenes */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Hide scrollbar pero mantener funcionalidad */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Backdrop blur fallback */
+@supports not (backdrop-filter: blur(10px)) {
+  .backdrop-blur-sm {
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+  
+  .backdrop-blur-md {
+    background-color: rgba(255, 255, 255, 0.98);
+  }
+}
+
+/* Loading skeleton para imágenes */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Mejoras de accesibilidad */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Animación de entrada para productos */
+.product-enter {
+  animation: product-fade-in 0.6s ease-out forwards;
+}
+
+@keyframes product-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Stagger delay para grid items */
+.product-enter:nth-child(1) { animation-delay: 0.05s; }
+.product-enter:nth-child(2) { animation-delay: 0.1s; }
+.product-enter:nth-child(3) { animation-delay: 0.15s; }
+.product-enter:nth-child(4) { animation-delay: 0.2s; }
+.product-enter:nth-child(5) { animation-delay: 0.25s; }
+.product-enter:nth-child(6) { animation-delay: 0.3s; }
+.product-enter:nth-child(7) { animation-delay: 0.35s; }
+.product-enter:nth-child(8) { animation-delay: 0.4s; }

@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-primary: 'Playfair Display', serif;
+  --font-secondary: 'Poppins', sans-serif;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.563rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: 2.441rem;
+  --text-4xl: 3.052rem;
+  --color-primary: #1a1a1a;
+  --color-secondary: #f5f5f5;
+  --accent: #a67c52;
+}
+
+body {
+  font-family: var(--font-secondary);
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #143019 100%);
+}
+
+.casual-gradient {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, #e0e0e0 100%);
+}
+
+/* 🔥 Efecto Parallax para el Hero */
+.parallax-bg {
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+}
+
+.btn {
+  @apply px-6 py-3 rounded-md font-medium transition-all duration-300;
+}
+
+.btn-primary {
+  @apply bg-white text-gray-900 hover:bg-gray-100 hover:shadow-md;
+}
+
+.btn-outline {
+  @apply bg-transparent border border-white text-white hover:bg-white hover:text-gray-900;
+}
+
+/* 🔥 Mejor animación de botones */
+.btn:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔥 Animación avanzada: Zoom y Desenfoque en cambios de imagen */
+.image-transition {
+  transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+  transform: scale(1.1);
+  filter: blur(3px);
+  opacity: 0;
+}
+
+.image-transition.active {
+  transform: scale(1);
+  filter: blur(0);
+  opacity: 1;
+}
+
+.product-card {
+  @apply bg-white rounded-lg overflow-hidden shadow-md transition-all duration-300;
+}
+
+.product-card:hover {
+  @apply shadow-xl -translate-y-1;
+}
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.scroll-reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stagger-item {
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+.stagger-item.active {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.product-image-container {
+  overflow: hidden;
+}
+
+.product-image {
+  transition: transform 0.8s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
