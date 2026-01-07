@@ -1,4 +1,6 @@
 // src/services/product.ts
+// Servicio de productos para The Purrfect Glow
+
 import { prismaClientGlobal } from '@/src/app/lib/prisma';
 import { Prisma } from '@prisma/client';
 import {
@@ -6,79 +8,93 @@ import {
   ProductQueryDTO,
   PaginatedProductsResponse,
   UpdateProductDTO,
-  Product,
-  AddProductImageDTO,
-  ProductImage
+  Product
 } from '@/src/types';
 
+// Include para obtener tags completos
+const productInclude = {
+  tags: {
+    include: {
+      tag: true
+    }
+  }
+} satisfies Prisma.ProductInclude;
+
+// Transformar producto de DB a tipo frontend
+function transformProductFromDB(product: any): Product {
+  return {
+    ...product,
+    tags: product.tags?.map((pt: any) => pt.tag) || []
+  };
+}
+
+/**
+ * Obtiene productos con filtros y paginación
+ */
 export async function getProducts(options: ProductQueryDTO): Promise<PaginatedProductsResponse> {
   const {
     page = 1,
-    limit = 10,
-    category,
-    genre,
-    brandId,
+    limit = 12,
     search,
-    minPrice,
-    maxPrice,
+    tags,
+    available,
     featured,
-    isNew,
     sortBy = 'createdAt',
     sortOrder = 'desc'
   } = options;
 
-  // Construir el objeto de filtros
+  // Construir filtros
   const where: Prisma.ProductWhereInput = {};
 
-  if (category) where.category = category;
-  if (genre) where.genre = genre;
-  if (brandId) where.brandId = brandId;
-  if (featured !== undefined) where.featured = featured;
-  if (isNew !== undefined) where.isNew = isNew;
+  // Filtro por disponibilidad
+  if (available !== undefined) {
+    where.isAvailable = available;
+  }
 
-  // Filtros de precio
-  if (minPrice !== undefined || maxPrice !== undefined) {
-    where.price = {};
-    if (minPrice !== undefined) where.price.gte = minPrice;
-    if (maxPrice !== undefined) where.price.lte = maxPrice;
+  // Filtro por destacados
+  if (featured !== undefined) {
+    where.featured = featured;
   }
 
   // Búsqueda por texto
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } }
+      { summary: { contains: search, mode: 'insensitive' } }
     ];
   }
 
-  // Configurar el ordenamiento
+  // Filtro por tags (AND - debe tener TODOS los tags)
+  if (tags && tags.length > 0) {
+    where.AND = tags.map(tagSlug => ({
+      tags: {
+        some: {
+          tag: {
+            slug: tagSlug
+          }
+        }
+      }
+    }));
+  }
+
+  // Ordenamiento
   const orderBy: Prisma.ProductOrderByWithRelationInput = {
     [sortBy]: sortOrder
   };
 
   try {
-    // Ejecutar consultas en paralelo para mejorar rendimiento
-    const [products] = await Promise.all([
+    const [products, total] = await Promise.all([
       prismaClientGlobal.product.findMany({
         where,
-        include: {
-          brand: true,
-          images: {
-            orderBy: { createdAt: 'asc' }
-          },
-          sizes: {
-            orderBy: { value: 'asc' }
-          }
-        },
+        include: productInclude,
         take: limit,
         skip: (page - 1) * limit,
         orderBy
-      })
+      }),
+      prismaClientGlobal.product.count({ where })
     ]);
 
-    const total = await prismaClientGlobal.product.count({ where });
-
-    const result = {
+    return {
       products: products.map(transformProductFromDB),
       meta: {
         total,
@@ -87,163 +103,131 @@ export async function getProducts(options: ProductQueryDTO): Promise<PaginatedPr
         totalPages: Math.ceil(total / limit)
       }
     };
-    return result;
   } catch (error) {
     console.error('Error fetching products:', error);
     throw new Error('Failed to fetch products');
   }
 }
 
+/**
+ * Obtiene un producto por ID
+ */
 export async function getProductById(id: string): Promise<Product | null> {
   try {
-    const result = await prismaClientGlobal.product.findUnique({
+    const product = await prismaClientGlobal.product.findUnique({
       where: { id },
-      include: {
-        brand: true,
-        images: {
-          orderBy: { createdAt: 'asc' }
-        },
-        sizes: {
-          orderBy: { value: 'asc' }
-        }
-      }
+      include: productInclude
     });
 
-    const newResult = transformProductFromDB(result); // Transformar el producto para asegurar que los precios son números
+    if (!product) return null;
 
-    return newResult;
+    return transformProductFromDB(product);
   } catch (error) {
     console.error(`Error fetching product ${id}:`, error);
     throw new Error(`Failed to fetch product ${id}`);
   }
 }
 
-// src/services/product.ts - createProduct method
+/**
+ * Crea un nuevo producto
+ */
 export async function createProduct(data: CreateProductDTO): Promise<Product> {
-  console.log('Creating product with data:', data);
   try {
-    const result = await prismaClientGlobal.product.create({
+    const product = await prismaClientGlobal.product.create({
       data: {
         name: data.name,
-        description: data.description || null,
-        category: data.category,
-        genre: data.genre,
         price: data.price,
-        salePrice: data.salePrice || null,
-        featured: data.featured || false,
-        isNew: data.isNew ?? true,
-        brandId: data.brandId,
-        sizes: {
-          create: data.sizes.map(size => ({
-            value: size.value,
-            inventory: size.inventory
+        images: data.images,
+        summary: data.summary,
+        benefits: data.benefits || [],
+        howToUse: data.howToUse,
+        routineStep: data.routineStep,
+        usageTime: data.usageTime || 'BOTH',
+        keyIngredients: data.keyIngredients || {},
+        isAvailable: data.isAvailable ?? true,
+        featured: data.featured ?? false,
+        tags: {
+          create: data.tagIds.map(tagId => ({
+            tag: { connect: { id: tagId } }
           }))
         }
       },
-      include: {
-        brand: true,
-        sizes: { orderBy: { value: 'asc' } }
-      }
+      include: productInclude
     });
 
-    return transformProductFromDB(result);
+    return transformProductFromDB(product);
   } catch (error) {
-    console.log('Error creating product:', error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        throw new Error('A product with this name already exists');
-      }
-    }
+    console.error('Error creating product:', error);
     throw new Error('Failed to create product');
   }
 }
 
-// src/services/product.ts - updateProduct method (sin imágenes)
+/**
+ * Actualiza un producto
+ */
 export async function updateProduct(id: string, data: UpdateProductDTO): Promise<Product> {
-  const { sizes, ...productData } = data;
-  
+  const { tagIds, ...productData } = data;
+
   try {
-    return await prismaClientGlobal.$transaction(async (prisma) => {
-      // 1. Actualizar datos básicos del producto
-      await prisma.product.update({
-        where: { id },
-        data: productData,
+    // Si se proporcionan nuevos tags, eliminar los existentes y crear los nuevos
+    if (tagIds) {
+      await prismaClientGlobal.productTag.deleteMany({
+        where: { productId: id }
       });
+    }
 
-      // 2. Actualizar tallas si se proporcionan
-      if (sizes && sizes.length > 0) {
-        // Obtener tallas actuales
-        const currentSizes = await prisma.size.findMany({
-          where: { productId: id }
-        });
-        
-        // Crear un conjunto con los valores de tallas actuales
-        const currentSizeValues = new Set(currentSizes.map(size => size.value));
-        
-        // Conjunto para rastrear qué tallas se mantienen
-        const keepSizeValues = new Set<string>();
-        
-        for (const size of sizes) {
-          keepSizeValues.add(size.value);
-          
-          if (currentSizeValues.has(size.value)) {
-            // La talla existe, actualizarla
-            await prisma.size.update({
-              where: {
-                productId_value: {
-                  productId: id,
-                  value: size.value,
-                }
-              },
-              data: {
-                inventory: size.inventory
-              }
-            });
-          } else {
-            // La talla es nueva, crearla
-            await prisma.size.create({
-              data: {
-                value: size.value,
-                inventory: size.inventory,
-                productId: id
-              }
-            });
+    const product = await prismaClientGlobal.product.update({
+      where: { id },
+      data: {
+        ...productData,
+        ...(tagIds && {
+          tags: {
+            create: tagIds.map(tagId => ({
+              tag: { connect: { id: tagId } }
+            }))
           }
-        }
-        
-        // Eliminar tallas que ya no están en la lista
-        for (const size of currentSizes) {
-          if (!keepSizeValues.has(size.value)) {
-            await prisma.size.delete({
-              where: {
-                productId_value: {
-                  productId: id,
-                  value: size.value
-                }
-              }
-            });
-          }
-        }
-      }
-
-      // 3. Obtener el producto actualizado con todas sus relaciones
-      const result = await prisma.product.findUnique({
-        where: { id },
-        include: {
-          brand: true,
-          images: { orderBy: { createdAt: 'asc' } },
-          sizes: { orderBy: { value: 'asc' } }
-        }
-      });
-      
-      return transformProductFromDB(result);
+        })
+      },
+      include: productInclude
     });
+
+    return transformProductFromDB(product);
   } catch (error) {
     console.error(`Error updating product ${id}:`, error);
     throw new Error(`Failed to update product ${id}`);
   }
 }
 
+/**
+ * Toggle de disponibilidad (para admin - un solo clic)
+ */
+export async function toggleProductAvailability(id: string): Promise<Product> {
+  try {
+    const current = await prismaClientGlobal.product.findUnique({
+      where: { id },
+      select: { isAvailable: true }
+    });
+
+    if (!current) {
+      throw new Error(`Product ${id} not found`);
+    }
+
+    const product = await prismaClientGlobal.product.update({
+      where: { id },
+      data: { isAvailable: !current.isAvailable },
+      include: productInclude
+    });
+
+    return transformProductFromDB(product);
+  } catch (error) {
+    console.error(`Error toggling availability for product ${id}:`, error);
+    throw new Error(`Failed to toggle product availability`);
+  }
+}
+
+/**
+ * Elimina un producto
+ */
 export async function deleteProduct(id: string): Promise<boolean> {
   try {
     await prismaClientGlobal.product.delete({
@@ -261,139 +245,60 @@ export async function deleteProduct(id: string): Promise<boolean> {
   }
 }
 
-// Función helper de transformación
-function transformProductFromDB(product: any): Product {
-  return {
-    ...product,
-    price: parseFloat(product.price.toString()),
-    salePrice: product.salePrice ? parseFloat(product.salePrice.toString()) : null
-  };
+/**
+ * Obtiene todos los tags
+ */
+export async function getAllTags() {
+  try {
+    return await prismaClientGlobal.tag.findMany({
+      orderBy: [{ type: 'asc' }, { name: 'asc' }]
+    });
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    throw new Error('Failed to fetch tags');
+  }
 }
 
-export function getTotalProducts(): Promise<number> {
+/**
+ * Obtiene tags por tipo
+ */
+export async function getTagsByType(type: 'SKIN_TYPE' | 'CONCERN' | 'CATEGORY') {
+  try {
+    return await prismaClientGlobal.tag.findMany({
+      where: { type },
+      orderBy: { name: 'asc' }
+    });
+  } catch (error) {
+    console.error(`Error fetching tags of type ${type}:`, error);
+    throw new Error(`Failed to fetch tags of type ${type}`);
+  }
+}
+
+/**
+ * Cuenta total de productos
+ */
+export async function getTotalProducts(): Promise<number> {
   return prismaClientGlobal.product.count();
 }
 
-// src/services/product.ts - Método para agregar imagen a producto existente
-
-export async function addProductImage(
-  productId: string, 
-  imageData: AddProductImageDTO
-): Promise<ProductImage> {
+/**
+ * Obtiene productos destacados
+ */
+export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   try {
-    // 1. Verificar que el producto existe
-    const product = await prismaClientGlobal.product.findUnique({
-      where: { id: productId },
-      include: { images: true }
-    });
-
-    if (!product) {
-      throw new Error(`Product with ID ${productId} not found`);
-    }
-
-    // 2. Determinar si esta imagen debe ser la principal
-    const isMain = product.images.length === 0; // Es main si es la primera imagen
-
-    // 3. Si esta imagen va a ser main, asegurar que ninguna otra lo sea
-    if (isMain && product.images.some(img => img.isMain)) {
-      await prismaClientGlobal.productImage.updateMany({
-        where: { 
-          productId: productId,
-          isMain: true 
-        },
-        data: { isMain: false }
-      });
-    }
-
-    // 4. Crear la nueva imagen
-    const newImage = await prismaClientGlobal.productImage.create({
-      data: {
-        originalUrl: imageData.originalUrl,
-        standardUrl: imageData.standardUrl,
-        publicId: imageData.publicId,
-        isMain: isMain,
-        productId: productId
-      }
-    });
-
-    return newImage;
-  } catch (error) {
-    console.error(`Error adding image to product ${productId}:`, error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2025') {
-        throw new Error(`Product with ID ${productId} not found`);
-      }
-    }
-    throw new Error(`Failed to add image to product ${productId}`);
-  }
-}
-
-// Método auxiliar para establecer imagen principal
-export async function setMainProductImage(
-  productId: string, 
-  imageId: string
-): Promise<boolean> {
-  try {
-    await prismaClientGlobal.$transaction(async (prisma) => {
-      // 1. Quitar isMain de todas las imágenes del producto
-      await prisma.productImage.updateMany({
-        where: { productId: productId },
-        data: { isMain: false }
-      });
-
-      // 2. Establecer la imagen especificada como main
-      await prisma.productImage.update({
-        where: { 
-          id: imageId,
-          productId: productId // Asegurar que la imagen pertenece al producto
-        },
-        data: { isMain: true }
-      });
-    });
-
-    return true;
-  } catch (error) {
-    console.error(`Error setting main image ${imageId} for product ${productId}:`, error);
-    throw new Error(`Failed to set main image`);
-  }
-}
-
-// Método para eliminar imagen de producto
-export async function removeProductImage(
-  productId: string, 
-  imageId: string
-): Promise<boolean> {
-  try {
-    const deletedImage = await prismaClientGlobal.productImage.delete({
+    const products = await prismaClientGlobal.product.findMany({
       where: { 
-        id: imageId,
-        productId: productId // Asegurar que la imagen pertenece al producto
-      }
+        featured: true,
+        isAvailable: true 
+      },
+      include: productInclude,
+      take: limit,
+      orderBy: { createdAt: 'desc' }
     });
 
-    // Si la imagen eliminada era la principal, establecer otra como principal
-    if (deletedImage.isMain) {
-      const firstImage = await prismaClientGlobal.productImage.findFirst({
-        where: { productId: productId },
-        orderBy: { createdAt: 'asc' }
-      });
-
-      if (firstImage) {
-        await prismaClientGlobal.productImage.update({
-          where: { id: firstImage.id },
-          data: { isMain: true }
-        });
-      }
-    }
-
-    return true;
+    return products.map(transformProductFromDB);
   } catch (error) {
-    console.error(`Error removing image ${imageId} from product ${productId}:`, error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2025') {
-        throw new Error(`Image with ID ${imageId} not found`);
-      }
-    }
-    throw new Error(`Failed to remove image from product`);
+    console.error('Error fetching featured products:', error);
+    throw new Error('Failed to fetch featured products');
   }
 }

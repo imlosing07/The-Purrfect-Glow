@@ -7,118 +7,187 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ProductCategory {
-  FORMAL
-  SNEAKERS
-  SANDALS
-  BOOTS
-  ATHLETIC
-  CASUAL
-  SLIPPERS
-  OUTDOOR
-}
-
-enum Genre {
-  WOMENS
-  MENS
-  KIDS
-  UNISEX
-}
+// ═══════════════════════════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════════════════════════
 
 enum UserRole {
   ADMIN
   USER
 }
 
-model User {
-  id            String         @id @default(cuid())
-  name          String?
-  email         String         @unique
-  emailVerified DateTime?
-  image         String?
-  role          UserRole       @default(USER)
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  WishlistItem  WishlistItem[]
+enum TagType {
+  SKIN_TYPE // Piel Grasa, Seca, Mixta, Sensible, Acnéica
+  CONCERN // Manchas, Cicatrices, Aclarante, Hidratación
+  CATEGORY // Limpiador, Tónico, Sérum, Crema, Mascarilla
 }
+
+enum OrderStatus {
+  PENDING // Registrado, link de WhatsApp generado
+  SHIPPED // Enviado por Olva
+  DELIVERED // Entregado al cliente
+}
+
+enum ShippingZone {
+  LIMA_LOCAL // Miraflores, San Borja, Surco, etc.
+  LIMA_PROVINCIAS // Huacho, Barranca, Cañete
+  COSTA_NACIONAL // Trujillo, Chiclayo, Ica, Piura
+  SIERRA_SELVA // Arequipa, Cusco, Puno, Iquitos
+  ZONAS_REMOTAS // Áreas rurales o selva profunda
+}
+
+enum ShippingModality {
+  DOMICILIO // Entrega a domicilio
+  AGENCIA // Recojo en agencia Olva
+}
+
+enum UsageTime {
+  AM // Solo mañana
+  PM // Solo noche
+  BOTH // Mañana y noche
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRODUCT & CATALOG
+// ═══════════════════════════════════════════════════════════════
 
 model Product {
-  id          String          @id @default(uuid())
-  name        String
-  description String?
-  category    ProductCategory
-  genre       Genre
-  sizes       Size[]
-  price       Decimal         @db.Decimal(10, 2)
-  salePrice   Decimal?        @db.Decimal(10, 2)
-  featured    Boolean         @default(false)
-  isNew       Boolean         @default(true)
-  brandId     String
-  brand       Brand           @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  images      ProductImage[]
+  id     String   @id @default(uuid())
+  name   String
+  price  Float
+  images String[] // Array de URLs de Cloudinary
 
-  wishlistItems WishlistItem[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  // Información detallada del producto
+  summary        String? // Resumen corto
+  benefits       String[] // Lista de beneficios
+  howToUse       String? // Instrucciones de uso
+  routineStep    String? // "Paso 1: Limpieza", "Paso 4: Serum", etc.
+  usageTime      UsageTime @default(BOTH)
+  keyIngredients Json? // { "Niacinamida": "Ilumina y reduce poros", ... }
 
-  @@index([brandId])
-  @@index([category])
-  @@index([genre])
-}
+  isAvailable Boolean @default(true)
+  featured    Boolean @default(false)
 
-model Size {
-  id        String   @id @default(uuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  value     String   // Valor de la talla (ej. "42", "8.5")
-  inventory Int      // Cantidad disponible
+  // Relación muchos-a-muchos con Tags
+  tags       ProductTag[]
+  orderItems OrderItem[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([productId, value]) // No puede haber tallas duplicadas para el mismo producto
-  @@index([productId])
+  @@index([isAvailable])
+  @@index([featured])
 }
 
-model ProductImage {
-  id        String   @id @default(uuid())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId String
-  
-  // URLs simplificadas a solo dos variantes
-  originalUrl  String    // Imagen de alta calidad (2000px)
-  standardUrl  String    // Imagen estándar (600-840px)
-  publicId     String    // ID público en Cloudinary para facilitar operaciones
-  isMain       Boolean   @default(false) // Indica si es la imagen principal
-  
+model Tag {
+  id       String       @id @default(uuid())
+  name     String       @unique // "Piel Grasa", "Sérum", "Manchas"
+  slug     String       @unique // "piel-grasa", "serum", "manchas"
+  type     TagType
+  products ProductTag[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([productId])
+  @@index([type])
+  @@index([slug])
 }
 
-model Brand {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  logoUrl   String?   // URL del logo
-  products  Product[] // Relación inversa
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model WishlistItem {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model ProductTag {
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId     String
+
+  @@id([productId, tagId])
+  @@index([productId])
+  @@index([tagId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHIPPING (OLVA)
+// ═══════════════════════════════════════════════════════════════
+
+model ShippingRate {
+  id            String           @id @default(uuid())
+  zone          ShippingZone
+  modality      ShippingModality
+  cost          Float // Costo en soles
+  estimatedDays String // "24 - 48h", "3 - 5 días"
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, productId]) // Un usuario no puede tener el mismo producto repetido en su wishlist
-  @@index([userId])
-  @@index([productId])
+  @@unique([zone, modality])
+  @@index([zone])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ORDERS (Pre-registro para WhatsApp)
+// ═══════════════════════════════════════════════════════════════
+
+model Order {
+  id String @id @default(uuid())
+
+  // Datos del cliente
+  dni        String
+  fullName   String
+  phone      String
+  address    String
+  department String
+  province   String
+
+  // Shipping info
+  shippingZone     ShippingZone
+  shippingModality ShippingModality @default(DOMICILIO)
+
+  // Totales
+  subtotal     Float
+  shippingCost Float
+  totalAmount  Float
+
+  // Estado y tracking
+  status       OrderStatus @default(PENDING)
+  whatsappLink String? // Link generado para seguimiento
+
+  // Items del pedido
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([phone])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  unitPrice Float // Precio al momento de la compra
+
+  @@index([orderId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTH (NextAuth - Se mantiene igual)
+// ═══════════════════════════════════════════════════════════════
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(USER)
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Account {
@@ -133,11 +202,9 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
   @@index([userId])
@@ -148,9 +215,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([userId])
 }
