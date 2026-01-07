@@ -2,20 +2,31 @@ import { auth } from '@/auth';
 import '@/src/app/ui/global.css';
 import { Metadata } from 'next';
 import { SessionProvider } from 'next-auth/react';
-import { Poppins } from 'next/font/google';
+import { Baloo_2, Nunito } from 'next/font/google';
 import { WishlistProvider } from '@/src/app/lib/contexts/WishlistContext';
 import { CartProvider } from '@/src/app/lib/contexts/CartContext';
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | SneakerShooes',
-    default: 'SneakerShooes',
+    template: '%s | The Purrfect Glow',
+    default: 'The Purrfect Glow',
   },
-  description: 'Zapatillas zapatos de la mejor calidad y precio, entrega rápida y segura',
-  // metadataBase: new URL('https://mywebsite.com'),
+  description: 'Skincare coreano de alta calidad. Descubre productos K-Beauty para todo tipo de piel 🌸',
 };
 
-const poppins = Poppins({ subsets: ["latin"], weight: ["300", "500", "700"] });
+const baloo = Baloo_2({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-baloo',
+  display: 'swap',
+});
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-nunito',
+  display: 'swap',
+});
 
 export default async function RootLayout({
   children,
@@ -25,8 +36,8 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="es">
-      <body className={poppins.className}>
+    <html lang="es" className={`${baloo.variable} ${nunito.variable}`}>
+      <body className="font-nunito bg-brand-cream text-brand-brown antialiased">
         <SessionProvider session={session}>
           <CartProvider>
             <WishlistProvider>

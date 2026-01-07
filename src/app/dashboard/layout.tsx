@@ -1,13 +1,24 @@
-// dashboard/layout.tsx
-import Breadcrumbs from '@/src/app/ui/breadcrumbs';
+import Sidebar from './components/Sidebar';
+import { ToastProvider } from './components/Toast';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen flex-col">
-      <div className="flex-grow md:overflow-y-auto md:p-4">
-        <Breadcrumbs />
-        {children}
+    <ToastProvider>
+      <div className="flex h-screen bg-brand-cream">
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Mobile header spacing */}
+          <div className="lg:hidden h-16" />
+
+          {/* Content */}
+          <div className="p-4 lg:p-8">
+            {children}
+          </div>
+        </main>
       </div>
-    </div>
+    </ToastProvider>
   );
 }

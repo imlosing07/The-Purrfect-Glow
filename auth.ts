@@ -3,7 +3,7 @@ import { authConfig } from './auth.config';
 import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prismaClientGlobal } from '@/src/app/lib/prisma';
-import { UserRole } from '@/src/app/lib/constants/product-constants';
+import { UserRole } from './src/types';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,

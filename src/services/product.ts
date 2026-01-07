@@ -164,13 +164,18 @@ export async function createProduct(data: CreateProductDTO): Promise<Product> {
 
 /**
  * Actualiza un producto
+ * NOTA: Los tags solo se actualizan si se proporciona tagIds con valores.
+ * Si tagIds es undefined o vacío, los tags existentes se mantienen.
  */
 export async function updateProduct(id: string, data: UpdateProductDTO): Promise<Product> {
   const { tagIds, ...productData } = data;
 
   try {
-    // Si se proporcionan nuevos tags, eliminar los existentes y crear los nuevos
-    if (tagIds) {
+    // Solo actualizar tags si se proporcionan tagIds con al menos un valor
+    const shouldUpdateTags = tagIds && tagIds.length > 0;
+
+    if (shouldUpdateTags) {
+      // Eliminar tags existentes y crear los nuevos
       await prismaClientGlobal.productTag.deleteMany({
         where: { productId: id }
       });
@@ -180,9 +185,9 @@ export async function updateProduct(id: string, data: UpdateProductDTO): Promise
       where: { id },
       data: {
         ...productData,
-        ...(tagIds && {
+        ...(shouldUpdateTags && {
           tags: {
-            create: tagIds.map(tagId => ({
+            create: tagIds!.map(tagId => ({
               tag: { connect: { id: tagId } }
             }))
           }
