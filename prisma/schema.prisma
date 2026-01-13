@@ -47,6 +47,16 @@ enum UsageTime {
   BOTH // Mañana y noche
 }
 
+enum RoutineStep {
+  CLEANSE // Paso 1: Limpieza
+  TONER // Paso 2: Tónico
+  SERUM // Paso 3: Serum
+  AMPOULE // Paso 4: Ampolla
+  MOISTURIZER // Paso 5: Crema
+  SUNSCREEN // Paso 6: Protector Solar
+  SPECIAL_CARE // Casos especiales (mascarillas, tone-up, kits)
+}
+
 // ═══════════════════════════════════════════════════════════════
 // PRODUCT & CATALOG
 // ═══════════════════════════════════════════════════════════════
@@ -61,16 +71,17 @@ model Product {
   summary        String? // Resumen corto
   benefits       String[] // Lista de beneficios
   howToUse       String? // Instrucciones de uso
-  routineStep    String? // "Paso 1: Limpieza", "Paso 4: Serum", etc.
-  usageTime      UsageTime @default(BOTH)
+  routineStep    RoutineStep? // Paso en la rutina de skincare
+  usageTime      UsageTime    @default(BOTH)
   keyIngredients Json? // { "Niacinamida": "Ilumina y reduce poros", ... }
 
   isAvailable Boolean @default(true)
   featured    Boolean @default(false)
 
   // Relación muchos-a-muchos con Tags
-  tags       ProductTag[]
-  orderItems OrderItem[]
+  tags          ProductTag[]
+  orderItems    OrderItem[]
+  wishlistItems WishlistItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -178,16 +189,17 @@ model OrderItem {
 // ═══════════════════════════════════════════════════════════════
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String         @unique
   emailVerified DateTime?
   image         String?
-  role          UserRole  @default(USER)
+  role          UserRole       @default(USER)
   accounts      Account[]
   sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  wishlistItems WishlistItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Account {
@@ -227,4 +239,21 @@ model VerificationToken {
   expires    DateTime
 
   @@id([identifier, token])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WISHLIST (Favoritos del usuario)
+// ═══════════════════════════════════════════════════════════════
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
 }

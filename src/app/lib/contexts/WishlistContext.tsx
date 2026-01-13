@@ -5,12 +5,13 @@ import { toggleFavorite as toggleFavoriteAction, getUserWishlistIds } from '@/sr
 import { useSession } from 'next-auth/react';
 
 interface WishlistContextType {
-    wishlistIds: Set<string>;
-    isLoading: boolean;
-    toggleFavorite: (productId: string) => Promise<boolean>;
-    isInWishlist: (productId: string) => boolean;
-    refreshWishlist: () => Promise<void>;
-    wishlistCount: number;
+  wishlistIds: Set<string>;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  toggleFavorite: (productId: string) => Promise<boolean>;
+  isInWishlist: (productId: string) => boolean;
+  refreshWishlist: () => Promise<void>;
+  wishlistCount: number;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -54,7 +55,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     // Guardar estado anterior para revertir si falla
     const previousWishlistIds = new Set(wishlistIds);
     const wasInWishlist = wishlistIds.has(productId);
-        
+
     // Optimistic update
     const newWishlistIds = new Set(wishlistIds);
     if (wasInWishlist) {
@@ -97,9 +98,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   // Contador de items en wishlist
   const wishlistCount = wishlistIds.size;
 
+  // Check if authenticated
+  const isAuthenticated = status === 'authenticated' && !!session?.user?.id;
+
   const value: WishlistContextType = {
     wishlistIds,
     isLoading,
+    isAuthenticated,
     toggleFavorite,
     isInWishlist,
     refreshWishlist,

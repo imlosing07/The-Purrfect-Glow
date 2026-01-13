@@ -98,13 +98,7 @@ export async function getUserWishlist() {
         userId: session.user.id,
       },
       include: {
-        product: {
-          include: {
-            images: true,
-            brand: true,
-            sizes: true,
-          },
-        },
+        product: true,
       },
       orderBy: {
         createdAt: 'desc',

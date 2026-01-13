@@ -19,7 +19,7 @@ import {
     Link as LinkIcon,
     Tag
 } from 'lucide-react';
-import { UsageTime, Product, Tag as TagType, TagType as TagTypeEnum } from '@/src/types';
+import { UsageTime, RoutineStep, ROUTINE_STEP_INFO, Product, Tag as TagType, TagType as TagTypeEnum } from '@/src/types';
 import { useToast } from './Toast';
 
 // Tag type labels and colors
@@ -38,7 +38,7 @@ const productSchema = z.object({
     price: z.number().min(1, 'El precio debe ser mayor a 0'),
     summary: z.string().min(10, 'El resumen debe tener al menos 10 caracteres'),
     howToUse: z.string().optional(),
-    routineStep: z.string().optional(),
+    routineStep: z.nativeEnum(RoutineStep).optional().nullable(),
     usageTime: z.nativeEnum(UsageTime),
     isAvailable: z.boolean(),
     featured: z.boolean(),
@@ -145,7 +145,7 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
             price: product?.price || 0,
             summary: product?.summary || '',
             howToUse: product?.howToUse || '',
-            routineStep: product?.routineStep || '',
+            routineStep: product?.routineStep || null,
             usageTime: product?.usageTime || UsageTime.BOTH,
             isAvailable: product?.isAvailable ?? true,
             featured: product?.featured ?? false,
@@ -491,11 +491,17 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                             <label className="block font-nunito font-semibold text-brand-brown mb-2">
                                 Paso de Rutina
                             </label>
-                            <input
+                            <select
                                 {...register('routineStep')}
-                                placeholder="Ej: Paso 4: Serum"
-                                className="w-full px-4 py-3 bg-brand-cream rounded-2xl border-0 font-nunito text-brand-brown placeholder:text-brand-brown/40 focus:ring-2 focus:ring-brand-orange"
-                            />
+                                className="w-full px-4 py-3 bg-brand-cream rounded-2xl border-0 font-nunito text-brand-brown focus:ring-2 focus:ring-brand-orange"
+                            >
+                                <option value="">Sin paso asignado</option>
+                                {Object.entries(ROUTINE_STEP_INFO).map(([key, info]) => (
+                                    <option key={key} value={key}>
+                                        {info.icon} {info.step > 0 ? `Paso ${info.step}: ` : ''}{info.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div>

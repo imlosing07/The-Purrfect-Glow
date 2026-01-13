@@ -44,3 +44,4 @@ next-env.d.ts
 # deployment instructions (contains sensitive info)
 DEPLOY_INSTRUCTIONS.md
 QUICK_DEPLOY_GUIDE.md
+prisma/seed.ts

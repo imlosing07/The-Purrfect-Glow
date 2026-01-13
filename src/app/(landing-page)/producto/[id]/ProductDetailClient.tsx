@@ -1,261 +1,557 @@
 "use client";
-import { Product } from "@/src/types";
+
+import { Product, RoutineStep, ROUTINE_STEP_INFO } from "@/src/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SizeGuideModal from "../../components/SizeGuideModal";
-import FavoriteButton from "../../components/FavoriteButton";
+import { motion } from "framer-motion";
+import { ArrowLeft, Sun, Moon, ShoppingCart, Heart, Check } from "lucide-react";
 import { useCart } from "@/src/app/lib/contexts/CartContext";
-import { ArrowLeft, ShoppingCart } from "lucide-react";
+import { useWishlist } from "@/src/app/lib/contexts/WishlistContext";
+import Image from "next/image";
+
+// Colores pastel para ingredientes (rotan)
+const INGREDIENT_COLORS = [
+  "bg-[#BDDEFF]", // Celeste
+  "bg-[#FFB559]/30", // Naranja suave
+  "bg-[#EFB9EC]", // Morado
+];
+
+// Pasos de la rutina de skincare (6 pasos esenciales)
+const ROUTINE_STEPS = [
+  { step: 1, key: 'CLEANSE', name: "Limpieza", icon: "💧" },
+  { step: 2, key: 'TONER', name: "Tónico", icon: "✨" },
+  { step: 3, key: 'SERUM', name: "Serum", icon: "💎" },
+  { step: 4, key: 'AMPOULE', name: "Ampolla", icon: "🧴" },
+  { step: 5, key: 'MOISTURIZER', name: "Crema", icon: "🌸" },
+  { step: 6, key: 'SUNSCREEN', name: "Protector", icon: "☀️" },
+];
+
+// Animaciones de Framer Motion
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 },
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
 
 export default function ProductDetailClient({ product }: { product: Product }) {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [showAddedMessage, setShowAddedMessage] = useState(false);
+  const [showFavoriteMessage, setShowFavoriteMessage] = useState(false);
   const { addToCart } = useCart();
+  const { toggleFavorite, isInWishlist } = useWishlist();
 
-  const hasDiscount = product.salePrice && product.salePrice < product.price;
-  const mainImage = product.images.find(img => img.isMain) || product.images[0];
+  const isProductInWishlist = isInWishlist(product.id);
 
+  // Verificar si es un producto de cuidado especial
+  const isSpecialCare = product.routineStep === RoutineStep.SPECIAL_CARE;
+
+  // Obtener el número de paso de la rutina usando el enum
+  const getCurrentStep = (): number => {
+    if (!product.routineStep || isSpecialCare) return 0;
+    const stepInfo = ROUTINE_STEP_INFO[product.routineStep];
+    return stepInfo ? stepInfo.step : 0;
+  };
+
+  const currentStep = getCurrentStep();
+
+  // Obtener label del paso de rutina
+  const getRoutineStepLabel = (): string => {
+    if (!product.routineStep) return '';
+    const stepInfo = ROUTINE_STEP_INFO[product.routineStep];
+    if (!stepInfo) return '';
+    if (isSpecialCare) return stepInfo.label;
+    return `Paso ${stepInfo.step}: ${stepInfo.label}`;
+  };
+
+  // Generar link de WhatsApp
+  const generateWhatsAppLink = () => {
+    const phone = "51987654321"; // Reemplazar con número real
+    const message = encodeURIComponent(
+      `¡Hola Solicorn! 🌟 Me encantaría brillar con el ${product.name}. ¿Está disponible?`
+    );
+    return `https://wa.me/${phone}?text=${message}`;
+  };
+
+  // Agregar al carrito
   const handleAddToCart = () => {
-    if (!selectedSize) return;
-
-    const selectedSizeObj = product.sizes.find(s => s.value === selectedSize);
-    if (!selectedSizeObj || selectedSizeObj.inventory === 0) return;
+    if (!product.isAvailable) return;
 
     addToCart({
       productId: product.id,
       productName: product.name,
-      productImage: mainImage?.standardUrl || '',
-      brandName: product.brand?.name || '',
-      size: selectedSize,
+      productImage: product.images[0] || "",
+      brandName: "",
+      size: "único",
       price: product.price,
-      salePrice: product.salePrice || undefined,
     });
 
-    // Mostrar mensaje de confirmación
     setShowAddedMessage(true);
     setTimeout(() => setShowAddedMessage(false), 3000);
   };
 
-  return (
-    <div className="min-h-screen bg-white pt-20 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb and Back Button */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="text-sm text-gray-500">
-            <button onClick={() => router.push("/")} className="hover:underline cursor-pointer">Home</button>
-            {" / "}
-            <span className="hover:underline cursor-pointer">{product.category}</span>
-            {" / "}
-            <span className="text-black">{product.name}</span>
-          </div>
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-700 hover:text-black transition font-medium"
-          >
-            <ArrowLeft className="w-5 h-5" />
-                        Volver
-          </button>
-        </div>
+  // Agregar/quitar de favoritos
+  const handleToggleFavorite = async () => {
+    const newState = await toggleFavorite(product.id);
+    if (newState && !isProductInWishlist) {
+      setShowFavoriteMessage(true);
+      setTimeout(() => setShowFavoriteMessage(false), 3000);
+    }
+  };
 
-        <div className="grid md:grid-cols-2 gap-12">
-          {/* Galería de imágenes */}
-          <div className="space-y-4">
-            {/* Imagen principal */}
-            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+  // Renderizar íconos de tiempo de uso
+  const renderUsageTimeIcons = () => {
+    switch (product.usageTime) {
+      case "AM":
+        return (
+          <div className="flex items-center gap-2 text-brand-orange">
+            <Sun className="w-5 h-5" />
+            <span className="text-sm font-medium">Uso AM (Mañana)</span>
+          </div>
+        );
+      case "PM":
+        return (
+          <div className="flex items-center gap-2 text-indigo-400">
+            <Moon className="w-5 h-5" />
+            <span className="text-sm font-medium">Uso PM (Noche)</span>
+          </div>
+        );
+      case "BOTH":
+      default:
+        return (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 text-brand-orange">
+              <Sun className="w-5 h-5" />
+              <span className="text-sm font-medium">AM</span>
+            </div>
+            <span className="text-brand-brown/30">|</span>
+            <div className="flex items-center gap-1 text-indigo-400">
+              <Moon className="w-5 h-5" />
+              <span className="text-sm font-medium">PM</span>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-brand-cream pb-32 md:pb-16">
+      {/* Decorative elements */}
+      <div className="fixed top-20 right-4 opacity-20 pointer-events-none hidden md:block">
+        <Image src="/Elementos/Vector-49.png" alt="" width={80} height={80} />
+      </div>
+      <div className="fixed bottom-40 left-4 opacity-20 pointer-events-none hidden md:block">
+        <Image src="/Elementos/Vector-51.png" alt="" width={60} height={60} />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        {/* Back Button */}
+        <motion.button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-brand-brown hover:text-brand-brown-dark transition font-medium mb-6"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Volver
+        </motion.button>
+
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* LEFT COLUMN - Images (Sticky on Desktop) */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          <motion.div
+            className="lg:sticky lg:top-24 lg:self-start space-y-4"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Main Image */}
+            <div className="relative bg-white rounded-3xl shadow-soft-md overflow-hidden aspect-square">
               {product.images[selectedImage] ? (
                 <img
-                  src={product.images[selectedImage].standardUrl}
+                  src={product.images[selectedImage]}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain p-4"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                    Sin imagen
+                <div className="w-full h-full flex items-center justify-center text-brand-brown/40">
+                  <span className="text-6xl">🧴</span>
                 </div>
               )}
+
+              {/* Unavailable Badge */}
+              {!product.isAvailable && (
+                <div className="absolute top-4 left-4 bg-gray-500 text-white px-4 py-2 rounded-full font-baloo font-semibold text-sm">
+                  Agotado
+                </div>
+              )}
+
+              {/* Featured Badge */}
+              {product.featured && (
+                <div className="absolute top-4 right-4 bg-brand-yellow text-brand-brown px-3 py-1 rounded-full font-baloo font-semibold text-sm flex items-center gap-1">
+                  ⭐ Destacado
+                </div>
+              )}
+
+              {/* Decorative star */}
+              <div className="absolute bottom-4 right-4 opacity-30">
+                <Image src="/Elementos/Vector-1.png" alt="" width={40} height={40} />
+              </div>
             </div>
 
-            {/* Miniaturas */}
+            {/* Thumbnail Gallery - Washi Tape Style */}
             {product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
+              <div className="flex gap-3 justify-center flex-wrap">
                 {product.images.map((img, idx) => (
                   <button
-                    key={img.id}
+                    key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition ${idx === selectedImage ? 'border-black' : 'border-gray-200 hover:border-gray-400'
-                    }`}
+                    className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all transform hover:scale-105 ${idx === selectedImage
+                      ? "border-brand-orange shadow-glow rotate-2"
+                      : "border-brand-cream-dark hover:border-brand-yellow -rotate-1"
+                      }`}
+                    style={{
+                      transform: `rotate(${idx % 2 === 0 ? -2 : 2}deg)`,
+                    }}
                   >
                     <img
-                      src={img.standardUrl}
+                      src={img}
                       alt={`Vista ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
+                    {/* Washi tape effect */}
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-brand-yellow/60 rounded-sm" />
                   </button>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          {/* Info del producto */}
-          <div className="space-y-6">
-            {/* Badges */}
-            <div className="flex gap-2">
-              {product.isNew && (
-                <span className="bg-black text-white text-xs font-bold px-3 py-1 rounded-full">
-                                    NUEVO
-                </span>
-              )}
-              {product.featured && (
-                <span className="bg-amber-400 text-black text-xs font-bold px-3 py-1 rounded-full">
-                                    ⭐ DESTACADO
-                </span>
-              )}
-            </div>
-
-            {/* Marca y nombre */}
-            <div>
-              <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">
-                {product.brand?.name}
-              </p>
-              <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-              <p className="text-gray-600">{product.description}</p>
-            </div>
-
-            {/* Precio */}
-            <div className="py-4 border-y">
-              {hasDiscount ? (
-                <div className="space-y-1">
-                  <p className="text-3xl font-bold text-red-600">
-                                        S/ {product.salePrice?.toFixed(2)}
-                  </p>
-                  <p className="text-lg text-gray-400 line-through">
-                                        S/ {product.price.toFixed(2)}
-                  </p>
-                  <p className="text-sm text-green-600 font-medium">
-                                        ¡Ahorra S/ {(product.price - product.salePrice!)?.toFixed(2)}!
-                  </p>
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* RIGHT COLUMN - Product Info */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          <motion.div
+            className="space-y-6"
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+          >
+            {/* Hero Info */}
+            <motion.div variants={fadeInUp} className="space-y-3">
+              {/* Routine Step Badge */}
+              {product.routineStep && (
+                <div className="inline-flex items-center gap-2 bg-pastel-blue/30 text-brand-brown px-3 py-1.5 rounded-full text-sm font-medium">
+                  <span>{ROUTINE_STEP_INFO[product.routineStep]?.icon || '🧴'}</span>
+                  {getRoutineStepLabel()}
                 </div>
-              ) : (
-                <p className="text-3xl font-bold">S/ {product.price.toFixed(2)}</p>
               )}
-            </div>
 
-            {/* Selector de tallas */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <p className="font-medium text-gray-900">Selecciona tu talla:</p>
-                <button
-                  onClick={() => setShowSizeGuide(true)}
-                  className="text-sm font-medium text-gray-700 hover:text-black flex items-center gap-1.5 transition-colors group"
-                >
-                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                                    Guía de tallas
-                </button>
-              </div>
-              <div className="grid grid-cols-5 gap-2">
-                {product.sizes.map((size) => {
-                  const isLowStock = size.inventory > 0 && size.inventory <= 3;
-                  const isOutOfStock = size.inventory === 0;
-                  const isSelected = selectedSize === size.value;
+              {/* Product Name */}
+              <h1 className="font-baloo text-3xl md:text-4xl font-bold text-brand-brown leading-tight">
+                {product.name}
+              </h1>
 
-                  return (
-                    <button
-                      key={size.id}
-                      onClick={() => !isOutOfStock && setSelectedSize(size.value)}
-                      disabled={isOutOfStock}
-                      className={`relative py-3 rounded-lg border-2 font-medium transition-all duration-200 ${isOutOfStock
-                        ? 'border-gray-200 text-gray-300 cursor-not-allowed bg-gray-50'
-                        : isSelected
-                          ? 'border-black bg-black text-white shadow-md scale-105'
-                          : 'border-gray-300 hover:border-black hover:shadow-sm hover:scale-102'
-                      }`}
-                    >
-                      <span className={isOutOfStock ? 'line-through' : ''}>
-                        {size.value}
-                      </span>
-                      {isLowStock && !isSelected && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full border border-white" />
-                      )}
-                      {isOutOfStock && (
-                        <span className="absolute inset-0 flex items-center justify-center">
-                          <span className="w-full h-0.5 bg-gray-300 rotate-45" />
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+              {/* Usage Time Icons */}
+              <div className="py-2">{renderUsageTimeIcons()}</div>
+
+              {/* Price Sticker */}
+              <div className="inline-block">
+                <div className="bg-pastel-green px-6 py-3 rounded-full shadow-soft transform -rotate-1">
+                  <span className="font-baloo text-2xl font-bold text-brand-brown">
+                    S/ {product.price.toFixed(2)}
+                  </span>
+                </div>
               </div>
-              {product.sizes.some(s => s.inventory > 0 && s.inventory <= 3) && (
-                <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-orange-500 rounded-full" />
-                                    Tallas con stock limitado
+            </motion.div>
+
+            {/* Summary */}
+            {product.summary && (
+              <motion.div variants={fadeInUp}>
+                <p className="text-brand-brown/80 font-nunito leading-relaxed">
+                  {product.summary}
                 </p>
-              )}
-              {product.sizes.every(s => s.inventory === 0) && (
-                <p className="text-sm text-red-600 mt-2 font-medium">Agotado temporalmente</p>
-              )}
-            </div>
-
-            {/* Mensaje de producto agregado */}
-            {showAddedMessage && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-                <ShoppingCart className="w-5 h-5 text-green-600" />
-                <p className="text-green-800 font-medium">¡Producto agregado al carrito!</p>
-              </div>
+              </motion.div>
             )}
 
-            {/* Botones de acción */}
-            <div className="space-y-3">
-              <button
-                onClick={handleAddToCart}
-                disabled={!selectedSize || product.sizes.every(s => s.inventory === 0)}
-                className="w-full bg-black text-white py-4 rounded-lg font-medium hover:bg-gray-800 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {selectedSize ? 'Agregar al carrito' : 'Selecciona una talla'}
-              </button>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* TIP DE SOLICORN - For SPECIAL_CARE products */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {isSpecialCare && (
+              <motion.div variants={fadeInUp} className="py-4">
+                <div className="bg-gradient-to-r from-pastel-pink/40 to-pastel-purple/40 p-5 rounded-3xl border-2 border-dashed border-brand-orange/30 relative overflow-hidden">
+                  {/* Decorative cat */}
+                  <div className="absolute -right-2 -top-2 opacity-60">
+                    <Image src="/Elementos/Group 1697.png" alt="" width={50} height={50} />
+                  </div>
 
-              <FavoriteButton
-                productId={product.id}
-                variant="inline"
-                className="w-full border-2 border-black py-4 rounded-lg font-medium hover:bg-gray-50"
-                showToast={true}
-              />
-            </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">💕</span>
+                    <div>
+                      <h3 className="font-baloo font-semibold text-brand-brown text-lg mb-1">
+                        Tip de Solicorn ✨
+                      </h3>
+                      <p className="text-brand-brown/80 font-nunito text-sm leading-relaxed">
+                        Este es un <strong>paso especial</strong> de cuidado: Úsalo cuando tu piel necesite un extra de amor.
+                        No es parte de la rutina diaria, pero hace magia cuando lo necesitas.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-            {/* Info adicional */}
-            <div className="pt-4 space-y-3 text-sm">
-              <div className="flex items-start gap-3">
-                <span className="text-xl">🚚</span>
-                <div>
-                  <p className="font-medium">Envío gratis</p>
-                  <p className="text-gray-600">En compras mayores a S/ 200</p>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* ROUTINE TIMELINE - For regular steps 1-6 */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {currentStep > 0 && !isSpecialCare && (
+              <motion.div variants={fadeInUp} className="py-4">
+                <h3 className="font-baloo text-lg font-semibold text-brand-brown mb-4 flex items-center gap-2">
+                  <span>📋</span> Tu Rutina de Skincare
+                </h3>
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute top-6 left-0 right-0 h-1 bg-brand-cream-dark rounded-full" />
+                  <div
+                    className="absolute top-6 left-0 h-1 bg-pastel-green rounded-full transition-all"
+                    style={{ width: `${((currentStep - 1) / (ROUTINE_STEPS.length - 1)) * 100}%` }}
+                  />
+
+                  {/* Steps */}
+                  <div className="relative flex justify-between">
+                    {ROUTINE_STEPS.map((step) => (
+                      <div key={step.step} className="flex flex-col items-center">
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${step.step === currentStep
+                            ? "bg-pastel-green shadow-glow scale-110 ring-4 ring-pastel-green/30"
+                            : step.step < currentStep
+                              ? "bg-pastel-green/50"
+                              : "bg-brand-cream-dark"
+                            }`}
+                        >
+                          {step.icon}
+                        </div>
+                        <span
+                          className={`mt-2 text-xs font-medium ${step.step === currentStep
+                            ? "text-brand-brown font-semibold"
+                            : "text-brand-brown/50"
+                            }`}
+                        >
+                          {step.name}
+                        </span>
+                        {/* Cat peeking at current step */}
+                        {step.step === currentStep && (
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2">
+                            <Image
+                              src="/Elementos/Group 1697.png"
+                              alt="Gatito"
+                              width={32}
+                              height={32}
+                              className="animate-bounce"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-xl">↩️</span>
-                <div>
-                  <p className="font-medium">Devolución gratis</p>
-                  <p className="text-gray-600">Tienes 30 días para devolver</p>
+              </motion.div>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* BENEFITS */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {product.benefits && product.benefits.length > 0 && (
+              <motion.div variants={fadeInUp} className="py-4">
+                <h3 className="font-baloo text-lg font-semibold text-brand-brown mb-4 flex items-center gap-2">
+                  <span>✨</span> Beneficios Clave
+                </h3>
+                <ul className="space-y-3">
+                  {product.benefits.map((benefit, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span className="text-brand-orange text-lg mt-0.5">🐾</span>
+                      <span className="text-brand-brown/80 font-nunito">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* KEY INGREDIENTS - Infographic Style */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {product.keyIngredients && Object.keys(product.keyIngredients).length > 0 && (
+              <motion.div variants={fadeInUp} className="py-4">
+                <h3 className="font-baloo text-lg font-semibold text-brand-brown mb-4 flex items-center gap-2">
+                  <span>🧪</span> Ingredientes Estrella
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {Object.entries(product.keyIngredients).map(([ingredient, description], idx) => (
+                    <div
+                      key={ingredient}
+                      className={`${INGREDIENT_COLORS[idx % INGREDIENT_COLORS.length]} p-4 rounded-2xl transform transition-transform hover:scale-[1.02]`}
+                      style={{ transform: `rotate(${idx % 2 === 0 ? -0.5 : 0.5}deg)` }}
+                    >
+                      <h4 className="font-baloo font-semibold text-brand-brown text-sm">
+                        {ingredient}
+                      </h4>
+                      <p className="text-brand-brown/70 text-xs font-nunito mt-1">
+                        {description}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HOW TO USE */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {product.howToUse && (
+              <motion.div variants={fadeInUp} className="py-4">
+                <h3 className="font-baloo text-lg font-semibold text-brand-brown mb-4 flex items-center gap-2">
+                  <span>📖</span> Modo de Uso
+                </h3>
+                <div className="bg-white p-5 rounded-2xl shadow-soft relative overflow-hidden">
+                  <p className="text-brand-brown/80 font-nunito leading-relaxed">
+                    {product.howToUse}
+                  </p>
+                  {/* Decorative corner */}
+                  <div className="absolute -bottom-2 -right-2 opacity-20">
+                    <Image src="/Elementos/Vector-5.png" alt="" width={50} height={50} />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Removed inline desktop CTA - now using floating bar below */}
+          </motion.div>
         </div>
       </div>
 
-      {/* Modal de Guía de Tallas */}
-      {showSizeGuide && (
-        <SizeGuideModal
-          category={product.category as any}
-          onClose={() => setShowSizeGuide(false)}
-        />
-      )}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* STICKY CTA (Desktop) - Floating bar */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      <div className="hidden md:block fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-soft-lg border border-brand-cream-dark p-4 flex items-center gap-4">
+          {/* Success Messages - Desktop */}
+          {showAddedMessage && (
+            <div className="absolute -top-14 left-0 right-0 bg-pastel-green border border-pastel-green rounded-xl p-3 flex items-center gap-2 shadow-lg">
+              <Check className="w-5 h-5 text-green-600" />
+              <p className="text-brand-brown font-medium text-sm">¡Agregado al carrito! 🎉</p>
+            </div>
+          )}
+
+          {showFavoriteMessage && (
+            <div className="absolute -top-14 left-0 right-0 bg-pastel-pink border border-pastel-pink rounded-xl p-3 flex items-center gap-2 shadow-lg">
+              <Heart className="w-5 h-5 text-pink-500 fill-pink-500" />
+              <p className="text-brand-brown font-medium text-sm">¡Guardado en favoritos! 💕</p>
+            </div>
+          )}
+
+          {product.isAvailable ? (
+            <>
+              <button
+                onClick={handleAddToCart}
+                className="bg-brand-orange text-white px-8 py-3 rounded-xl font-baloo font-semibold hover:bg-brand-orange/90 transition flex items-center gap-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Agregar al carrito
+              </button>
+
+              <button
+                onClick={handleToggleFavorite}
+                className={`px-4 py-3 rounded-xl font-baloo font-semibold transition flex items-center justify-center ${isProductInWishlist
+                    ? "bg-pastel-pink text-brand-brown"
+                    : "bg-white border-2 border-brand-cream-dark text-brand-brown hover:bg-brand-cream"
+                  }`}
+              >
+                <Heart className={`w-5 h-5 ${isProductInWishlist ? "fill-current" : ""}`} />
+              </button>
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="text-brand-brown/60 font-nunito text-sm">Agotado</span>
+              <button
+                onClick={handleToggleFavorite}
+                className={`px-6 py-3 rounded-xl font-baloo font-semibold transition flex items-center gap-2 ${isProductInWishlist
+                    ? "bg-pastel-pink text-brand-brown"
+                    : "bg-brand-orange text-white hover:bg-brand-orange/90"
+                  }`}
+              >
+                <Heart className={`w-5 h-5 ${isProductInWishlist ? "fill-current" : ""}`} />
+                {isProductInWishlist ? "En favoritos" : "Guardar"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* STICKY CTA (Mobile) */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      <div className="fixed bottom-28 left-0 right-0 md:hidden bg-white border-t border-brand-cream-dark p-4 shadow-lg z-50">
+        {/* Success Messages - Mobile */}
+        {showAddedMessage && (
+          <div className="absolute -top-16 left-4 right-4 bg-pastel-green/90 border border-pastel-green rounded-xl p-3 flex items-center gap-2 shadow-lg">
+            <Check className="w-5 h-5 text-green-600" />
+            <p className="text-brand-brown font-medium text-sm">¡Agregado al carrito! 🎉</p>
+          </div>
+        )}
+
+        {showFavoriteMessage && (
+          <div className="absolute -top-16 left-4 right-4 bg-pastel-pink/90 border border-pastel-pink rounded-xl p-3 flex items-center gap-2 shadow-lg">
+            <Heart className="w-5 h-5 text-pink-500 fill-pink-500" />
+            <p className="text-brand-brown font-medium text-sm">¡Guardado en favoritos! 💕</p>
+          </div>
+        )}
+
+        {product.isAvailable ? (
+          <div className="flex gap-3">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 bg-brand-orange text-white py-3.5 rounded-xl font-baloo font-semibold hover:bg-brand-orange/90 transition flex items-center justify-center gap-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Agregar
+            </button>
+
+            <button
+              onClick={handleToggleFavorite}
+              className={`px-4 py-3.5 rounded-xl font-baloo font-semibold transition flex items-center justify-center ${isProductInWishlist
+                ? "bg-pastel-pink text-brand-brown"
+                : "bg-white border-2 border-brand-cream-dark text-brand-brown hover:bg-brand-cream"
+                }`}
+            >
+              <Heart className={`w-5 h-5 ${isProductInWishlist ? "fill-current" : ""}`} />
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-brand-brown/70 text-center text-sm font-nunito">
+              Agotado · Guárdalo para traerlo pronto 💕
+            </p>
+            <button
+              onClick={handleToggleFavorite}
+              className={`w-full py-3.5 rounded-xl font-baloo font-semibold transition flex items-center justify-center gap-2 ${isProductInWishlist
+                ? "bg-pastel-pink text-brand-brown"
+                : "bg-brand-orange text-white hover:bg-brand-orange/90"
+                }`}
+            >
+              <Heart className={`w-5 h-5 ${isProductInWishlist ? "fill-current" : ""}`} />
+              {isProductInWishlist ? "¡Ya está en favoritos!" : "Guardar en favoritos"}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

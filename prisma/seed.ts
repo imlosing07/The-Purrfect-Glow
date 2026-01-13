@@ -1,7 +1,7 @@
 // prisma/seed.ts
 // Script de seed para The Purrfect Glow
 
-import { PrismaClient, TagType, ShippingZone, ShippingModality, UsageTime } from '@prisma/client';
+import { PrismaClient, TagType, ShippingZone, ShippingModality, UsageTime, RoutineStep } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -77,7 +77,7 @@ const products = [
     summary: "Un protector solar químico ligero y orgánico con SPF50+ PA++++, enriquecido con extracto de arroz y probióticos para hidratar, nutrir y proteger la piel sin dejar residuo blanco. Ideal para todo tipo de piel, incluyendo sensible.",
     benefits: ["Fortalece la barrera cutánea", "Proporciona un brillo natural", "Calma la piel", "Hidratación duradera", "Protección UV alta sin residuo blanco"],
     howToUse: "Aplica una cantidad generosa (aproximadamente del tamaño de un cuarto) como último paso de tu rutina después del humectante. Masajea suavemente en la piel. Úsalo diariamente en la mañana y reaplica cada 2 horas si estás expuesto al sol.",
-    routineStep: "Paso final: Protección solar",
+    routineStep: RoutineStep.SUNSCREEN,
     usageTime: UsageTime.AM,
     keyIngredients: {
       "Extracto de arroz": "Hidrata y nutre la piel",
@@ -99,7 +99,7 @@ const products = [
     summary: "Un set de doble limpieza con aceite limpiador ligero y espuma de ampoule, infundido con extracto de centella asiática de Madagascar para calmar, hidratar y exfoliar suavemente la piel sensible o irritada, removiendo maquillaje e impurezas sin resecar.",
     benefits: ["Limpieza profunda sin resecar", "Calma irritaciones", "Hidrata la piel", "Remueve maquillaje e impurezas", "Mejora la textura y claridad de la piel"],
     howToUse: "Aplica unas bombas de aceite limpiador en el rostro seco con manos secas. Masajea en movimientos circulares para disolver maquillaje y suciedad. Enjuaga con agua tibia. Luego, aplica la espuma ampoule en el rostro húmedo, masajea y enjuaga. Úsalo en la noche para remover el maquillaje y en la mañana si es necesario.",
-    routineStep: "Paso 1: Limpieza",
+    routineStep: RoutineStep.CLEANSE,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Extracto de centella asiática": "Calma y repara la piel irritada",
@@ -118,7 +118,7 @@ const products = [
     summary: "Una máscara de arcilla en barra para minimizar poros, absorber exceso de sebo y exfoliar suavemente con polvo de frijol rojo y cinco tipos de arcillas, dejando la piel suave y refinada sin irritación.",
     benefits: ["Minimiza poros visibles", "Absorbe exceso de sebo", "Exfolia suavemente", "Deja la piel suave y refinada", "Calma y purifica sin irritar"],
     howToUse: "Después de lavar el rostro, aplica en el rostro evitando ojos y boca. Deja actuar 3-5 minutos y enjuaga con agua tibia. Úsalo 1-2 veces por semana, dependiendo de las necesidades de tu piel.",
-    routineStep: "Paso 3: Mascarilla",
+    routineStep: RoutineStep.SPECIAL_CARE,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Caolín": "Absorbe sebo y purifica",
@@ -140,7 +140,7 @@ const products = [
     summary: "Ampolla concentrada con 10% de niacinamida para iluminar, refinar poros y mejorar el tono de la piel, combinada con centella para calmar y ácido tranexámico para reducir hiperpigmentación.",
     benefits: ["Ilumina el tono de la piel", "Refina y minimiza poros", "Mejora la uniformidad del tono", "Calma irritaciones", "Reduce hiperpigmentación y manchas"],
     howToUse: "Aplica una cantidad adecuada en la piel después del tónico y masajea suavemente hasta absorber. Úsalo dos veces al día, mañana y noche, para mejores resultados.",
-    routineStep: "Paso 4: Ampolla/Serum",
+    routineStep: RoutineStep.AMPOULE,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Niacinamida (10%)": "Ilumina y refina poros",
@@ -161,7 +161,7 @@ const products = [
     summary: "Kit de viaje con cinco productos en tamaño mini (aceite limpiador, espuma, tónico, ampulla y crema) enfocados en centella asiática para limpiar, tonificar, hidratar y calmar la piel en movimiento.",
     benefits: ["Limpieza completa y suave", "Tonificación equilibrante", "Hidratación profunda", "Calma la piel irritada", "Ideal para rutinas de viaje"],
     howToUse: "Sigue los pasos: 1. Aceite limpiador en rostro seco. 2. Espuma en rostro húmedo. 3. Tónico con algodón o manos. 4. Ampulla masajeando. 5. Crema como sellador. Úsalo mañana y noche.",
-    routineStep: "Rutina completa (5 pasos)",
+    routineStep: RoutineStep.SPECIAL_CARE,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Extracto de centella asiática": "Calma y regenera",
@@ -179,7 +179,7 @@ const products = [
     summary: "Ampolla calmante y revitalizante con 71.77% de extracto de noni para hidratar, calmar irritaciones y mejorar la luminosidad, ideal para piel sensible o estresada.",
     benefits: ["Hidrata intensamente", "Calma irritaciones y rojeces", "Mejora la luminosidad", "Revitaliza piel estresada", "Fortalece la barrera cutánea"],
     howToUse: "Después de limpiar, aplica una cantidad adecuada en la palma y extiende suavemente sobre el rostro. Úsalo mañana o noche; muchos lo usan en ambas rutinas para resultados óptimos.",
-    routineStep: "Paso 4: Ampolla",
+    routineStep: RoutineStep.AMPOULE,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Extracto de fruta de noni": "Antioxidante y calmante",
@@ -201,7 +201,7 @@ const products = [
     summary: "Kit de inicio de Some By Mi con cuatro productos (limpiador, tónico, suero y crema) para iluminar y tratar manchas, con extracto de yuja y niacinamida para una piel más clara en 30 días.",
     benefits: ["Ilumina en 30 días", "Reduce manchas y blemishes", "Revitaliza y nutre", "Hidratación intensa", "Equilibra el tono de la piel"],
     howToUse: "1. Limpiador: Usa dos veces al día. 2. Tónico: Aplica con algodón o manos después de limpiar. 3. Suero: 2-3 gotas masajeando. 4. Crema: Como sellador. Úsalo mañana y noche.",
-    routineStep: "Rutina completa (4 pasos)",
+    routineStep: RoutineStep.SPECIAL_CARE,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Extracto de yuja (82%)": "Ilumina y revitaliza",
@@ -219,7 +219,7 @@ const products = [
     summary: "Set de dos sueros (niacinamida 10% + ácido tranexámico 4%, y suero de melocotón) para iluminar, equilibrar el tono y reducir manchas oscuras, con textura ligera para todo tipo de piel.",
     benefits: ["Ilumina la piel", "Equilibra el tono", "Reduce manchas oscuras", "Calma y fortalece barrera", "Hidratación ligera"],
     howToUse: "Después del tónico, aplica el suero en el rostro y masajea hasta absorber. Úsalo en la rutina de mañana y noche para resultados óptimos.",
-    routineStep: "Paso 4: Serum",
+    routineStep: RoutineStep.SERUM,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Niacinamida (10%)": "Ilumina y reduce inflamación",
@@ -239,7 +239,7 @@ const products = [
     summary: "Suero para ojos con ginseng y retinal para reducir arrugas, mejorar elasticidad y iluminar el contorno de ojos, combinando tradición coreana con ingredientes anti-envejecimiento.",
     benefits: ["Reduce arrugas y líneas finas", "Mejora elasticidad", "Ilumina el contorno de ojos", "Hidratante y nutritivo", "Gentil para piel sensible"],
     howToUse: "Bombea 1-2 veces y aplica suavemente con el dedo anular bajo los ojos y alrededor del área. Úsalo mañana y noche después del suero o humectante.",
-    routineStep: "Paso 5: Contorno de ojos",
+    routineStep: RoutineStep.SERUM,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Extracto de raíz de ginseng": "Revitaliza y energiza",
@@ -259,7 +259,7 @@ const products = [
     summary: "Limpiador en espuma burbujeante para piel acneica, con BHA para exfoliar poros y noni para calmar y nutrir, manteniendo la hidratación sin resecar.",
     benefits: ["Exfolia y limpia poros", "Calma y nutre la piel", "Reduce acné y breakouts", "Mantiene hidratación", "Purifica sin resecar"],
     howToUse: "Bombea 1-2 veces en manos húmedas o rostro. Masajea en movimientos circulares por 60 segundos, evitando ojos. Enjuaga con agua tibia. Úsalo diariamente como segundo limpiador o como máscara de burbujas por 10 segundos.",
-    routineStep: "Paso 1: Limpieza",
+    routineStep: RoutineStep.CLEANSE,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Extracto de noni (35.51%)": "Calmante y nutritivo",
@@ -279,7 +279,7 @@ const products = [
     summary: "Crema de alivio post-acné para calmar irritaciones, hidratar y reducir manchas, con una fórmula sensible que fortalece la barrera cutánea y mejora el tono.",
     benefits: ["Calma irritaciones post-acné", "Hidrata y nutre", "Reduce manchas y marcas", "Fortalece la barrera cutánea", "Mejora el tono general"],
     howToUse: "Aplica una cantidad adecuada uniformemente sobre el rostro y da palmaditas para mejor absorción como paso final de la rutina. Úsalo mañana y noche.",
-    routineStep: "Paso 6: Crema hidratante",
+    routineStep: RoutineStep.MOISTURIZER,
     usageTime: UsageTime.BOTH,
     keyIngredients: {
       "Niacinamida": "Ilumina y reduce manchas",
@@ -300,7 +300,7 @@ const products = [
     summary: "Crema tone-up para iluminar instantáneamente el tono de la piel, con efecto blanqueador y humectante, usando extractos botánicos para un acabado mate y natural sin maquillaje.",
     benefits: ["Ilumina instantáneamente", "Efecto blanqueador natural", "Humecta la piel", "Acabado mate y uniforme", "Puede usarse solo o como base"],
     howToUse: "Al final de la rutina, aplica una cantidad del tamaño de un guisante en la piel limpia. Masajea suavemente hasta absorber. Puede usarse en rostro y cuerpo, solo o como base de maquillaje.",
-    routineStep: "Paso final: Tone-up",
+    routineStep: RoutineStep.SPECIAL_CARE,
     usageTime: UsageTime.AM,
     keyIngredients: {
       "Niacinamida": "Ilumina el tono",

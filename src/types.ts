@@ -1,76 +1,86 @@
 // types.ts - The Purrfect Glow (Skincare E-commerce)
 
 // ═══════════════════════════════════════════════════════════════
-// ENUMS (Mirror Prisma enums for frontend use)
+// ENUMS (Import from Prisma for type consistency)
 // ═══════════════════════════════════════════════════════════════
 
-export enum TagType {
-  SKIN_TYPE = 'SKIN_TYPE',
-  CONCERN = 'CONCERN',
-  CATEGORY = 'CATEGORY',
-}
+// Import and re-export Prisma enums to avoid duplicate type definitions
+import {
+  TagType as PrismaTagType,
+  OrderStatus as PrismaOrderStatus,
+  ShippingZone as PrismaShippingZone,
+  ShippingModality as PrismaShippingModality,
+  UsageTime as PrismaUsageTime,
+  RoutineStep as PrismaRoutineStep,
+} from '@prisma/client';
 
-export enum OrderStatus {
-  PENDING = 'PENDING',
-  SHIPPED = 'SHIPPED',
-  DELIVERED = 'DELIVERED',
-}
+export {
+  PrismaTagType as TagType,
+  PrismaOrderStatus as OrderStatus,
+  PrismaShippingZone as ShippingZone,
+  PrismaShippingModality as ShippingModality,
+  PrismaUsageTime as UsageTime,
+  PrismaRoutineStep as RoutineStep,
+};
 
-export enum ShippingZone {
-  LIMA_LOCAL = 'LIMA_LOCAL',
-  LIMA_PROVINCIAS = 'LIMA_PROVINCIAS',
-  COSTA_NACIONAL = 'COSTA_NACIONAL',
-  SIERRA_SELVA = 'SIERRA_SELVA',
-  ZONAS_REMOTAS = 'ZONAS_REMOTAS',
-}
-
-export enum ShippingModality {
-  DOMICILIO = 'DOMICILIO',
-  AGENCIA = 'AGENCIA',
-}
-
-export enum UsageTime {
-  AM = 'AM',
-  PM = 'PM',
-  BOTH = 'BOTH',
-}
+// Create local aliases for use within this file
+type TagType = PrismaTagType;
+type OrderStatus = PrismaOrderStatus;
+type ShippingZone = PrismaShippingZone;
+type ShippingModality = PrismaShippingModality;
+type UsageTime = PrismaUsageTime;
+type RoutineStep = PrismaRoutineStep;
 
 // ═══════════════════════════════════════════════════════════════
 // SHIPPING ZONE METADATA (Para UI)
 // ═══════════════════════════════════════════════════════════════
 
 export const SHIPPING_ZONES_INFO: Record<ShippingZone, { label: string; examples: string }> = {
-  [ShippingZone.LIMA_LOCAL]: {
+  [PrismaShippingZone.LIMA_LOCAL]: {
     label: 'Lima Local',
     examples: 'Miraflores, San Borja, Surco, etc.',
   },
-  [ShippingZone.LIMA_PROVINCIAS]: {
+  [PrismaShippingZone.LIMA_PROVINCIAS]: {
     label: 'Lima Provincias',
     examples: 'Huacho, Barranca, Cañete',
   },
-  [ShippingZone.COSTA_NACIONAL]: {
+  [PrismaShippingZone.COSTA_NACIONAL]: {
     label: 'Costa Nacional',
     examples: 'Trujillo, Chiclayo, Ica, Piura',
   },
-  [ShippingZone.SIERRA_SELVA]: {
+  [PrismaShippingZone.SIERRA_SELVA]: {
     label: 'Sierra y Selva',
     examples: 'Arequipa, Cusco, Puno, Iquitos',
   },
-  [ShippingZone.ZONAS_REMOTAS]: {
+  [PrismaShippingZone.ZONAS_REMOTAS]: {
     label: 'Zonas Remotas',
     examples: 'Áreas rurales o selva profunda',
   },
 };
 
 export const SHIPPING_MODALITY_INFO: Record<ShippingModality, { label: string; icon: string }> = {
-  [ShippingModality.DOMICILIO]: {
+  [PrismaShippingModality.DOMICILIO]: {
     label: 'Entrega a Domicilio',
     icon: '🏠',
   },
-  [ShippingModality.AGENCIA]: {
+  [PrismaShippingModality.AGENCIA]: {
     label: 'Recojo en Agencia Olva',
     icon: '📦',
   },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ROUTINE STEP METADATA (Para UI)
+// ═══════════════════════════════════════════════════════════════
+
+export const ROUTINE_STEP_INFO: Record<RoutineStep, { label: string; step: number; icon: string }> = {
+  [PrismaRoutineStep.CLEANSE]: { label: 'Limpieza', step: 1, icon: '💧' },
+  [PrismaRoutineStep.TONER]: { label: 'Tónico', step: 2, icon: '✨' },
+  [PrismaRoutineStep.SERUM]: { label: 'Serum', step: 3, icon: '💎' },
+  [PrismaRoutineStep.AMPOULE]: { label: 'Ampolla', step: 4, icon: '🧴' },
+  [PrismaRoutineStep.MOISTURIZER]: { label: 'Crema', step: 5, icon: '🌸' },
+  [PrismaRoutineStep.SUNSCREEN]: { label: 'Protector Solar', step: 6, icon: '☀️' },
+  [PrismaRoutineStep.SPECIAL_CARE]: { label: 'Cuidado Especial', step: 0, icon: '💕' },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -94,7 +104,7 @@ export interface Product {
   summary?: string | null;
   benefits: string[];
   howToUse?: string | null;
-  routineStep?: string | null;
+  routineStep?: RoutineStep | null;
   usageTime: UsageTime;
   keyIngredients?: Record<string, string> | null;
   isAvailable: boolean;

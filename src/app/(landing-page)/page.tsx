@@ -1,21 +1,23 @@
-import HeroSection from "./components/Hero";
-import BrandsCarousel from "./components/BrandsCarousel";
-import ProductGrid from "./(category-page)/components/ProductGrid";
-import { getProducts } from "@/src/services/product";
+import HeroInteractive from './components/HeroInteractive';
+import FeaturedProducts from './components/FeaturedProducts';
+import SocialMediaSection from './components/SocialMediaSection';
 
-export default async function HomePage() {
-  // Fetch products server-side
-  const response = await getProducts({ limit: 12, featured: true });
-  const products = response.products;
-
+export default function HomePage() {
   return (
-    <>
-      <HeroSection />
-      <BrandsCarousel />
-      <ProductGrid
-        products={products}
-        title="Colección Premium"
-      />
-    </>
+    <div className="max-w-full">
+      {/* Interactive Hero Section */}
+      <HeroInteractive />
+
+      {/* Rest of the page content */}
+      <div className="px-4 lg:px-8 max-w-7xl mx-auto">
+
+        {/* Featured Products Section */}
+        <FeaturedProducts />
+
+        {/* Social Media Section */}
+        <SocialMediaSection />
+
+      </div>
+    </div>
   );
 }
