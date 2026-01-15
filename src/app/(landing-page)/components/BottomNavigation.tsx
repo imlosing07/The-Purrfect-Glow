@@ -15,6 +15,11 @@ const bottomNavItems = [
 export default function BottomNavigation() {
     const pathname = usePathname();
 
+    // Hide bottom nav on cart/checkout page for cleaner UX
+    if (pathname === '/carrito') {
+        return null;
+    }
+
     return (
         <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50">
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-soft-lg border border-white/50 px-2 py-2">
@@ -40,15 +45,15 @@ export default function BottomNavigation() {
                                 <Icon
                                     size={24}
                                     className={`relative z-10 transition-colors ${isActive
-                                            ? 'text-pastel-purple'
-                                            : 'text-brand-brown/50'
+                                        ? 'text-pastel-purple'
+                                        : 'text-brand-brown/50'
                                         }`}
                                     fill={isActive ? 'currentColor' : 'none'}
                                     strokeWidth={isActive ? 1.5 : 2}
                                 />
                                 <span className={`relative z-10 text-xs font-nunito mt-1 transition-colors ${isActive
-                                        ? 'text-brand-brown font-medium'
-                                        : 'text-brand-brown/50'
+                                    ? 'text-brand-brown font-medium'
+                                    : 'text-brand-brown/50'
                                     }`}>
                                     {item.name}
                                 </span>

@@ -96,6 +96,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
     setShowAddedMessage(true);
     setTimeout(() => setShowAddedMessage(false), 3000);
+    router.push('/carrito');
   };
 
   // Agregar/quitar de favoritos

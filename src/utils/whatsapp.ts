@@ -22,42 +22,39 @@ export interface WhatsAppOrderData {
  */
 export function generateWhatsAppLink(data: WhatsAppOrderData): string {
   const solicornPhone = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '51959619405';
-  
-  // Formatear lista de productos
-  const itemsList = data.items
-    .map(item => `   • ${item.name} x${item.quantity} — S/ ${item.price.toFixed(2)}`)
-    .join('\n');
-
-  // Calcular subtotal
   const subtotal = data.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-  // Obtener info de zona y modalidad
   const zoneInfo = SHIPPING_ZONES_INFO[data.shippingZone];
   const modalityInfo = SHIPPING_MODALITY_INFO[data.shippingModality];
 
+  const itemsList = data.items
+    .map(item => `✨ *${item.name}* (x${item.quantity})`)
+    .join('\n');
+
+  // Mensaje optimizado para conversión y legibilidad
   const message = `¡Hola Solicorn! 🌸✨
 
-Soy *${data.customerName}*
-📄 DNI: ${data.dni}
-📱 Teléfono: ${data.phone}
+He elegido estos productos para mi *Purrfect Glow*:
 
-━━━━━━━━━━━━━━━━━━━━━━
-📦 *MI PEDIDO:*
+---------------------------
+*RESUMEN DEL PEDIDO: *
 ${itemsList}
+---------------------------
 
-━━━━━━━━━━━━━━━━━━━━━━
-💵 Subtotal: S/ ${subtotal.toFixed(2)}
-🚚 Envío (${zoneInfo.label} - ${modalityInfo.label}): S/ ${data.shippingCost.toFixed(2)}
-⏱️ Tiempo estimado: ${data.estimatedDays}
+👤 *MIS DATOS:*
+- Nombre: ${data.customerName}
+- DNI: ${data.dni}
+- Cel: ${data.phone}
 
-💰 *TOTAL: S/ ${data.totalAmount.toFixed(2)}*
-━━━━━━━━━━━━━━━━━━━━━━
+🚚 *DETALLES DE ENVÍO:*
+- Destino: ${zoneInfo.label} (${modalityInfo.label})
+- Costo: S/ ${data.shippingCost.toFixed(2)}
+- Entrega estimada: ${data.estimatedDays}
 
-¿Me confirmas los datos para coordinar el envío por Olva? 🐱💕`;
+💰 *TOTAL A PAGAR: S/ ${data.totalAmount.toFixed(2)}*
 
-  const encodedMessage = encodeURIComponent(message);
-  
-  return `https://wa.me/${solicornPhone}?text=${encodedMessage}`;
+Quedo atento(a) para que me indiques los métodos de pago y asegurar mi pedido. ¡Muchas gracias! 🐾💕`;
+
+  return `https://wa.me/${solicornPhone}?text=${encodeURIComponent(message)}`;
 }
 
 /**

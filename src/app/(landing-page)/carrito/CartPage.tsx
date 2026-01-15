@@ -1,36 +1,144 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useCart } from '@/src/app/lib/contexts/CartContext';
-import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
-import CheckoutForm from './CheckoutForm';
-import { CheckoutData, STORE_LOCATIONS, TIME_SLOTS } from '@/src/types/checkout.types';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
+import OlvaShippingForm, { OlvaFormData } from './OlvaShippingForm';
+import { ShippingZone, CreateOrderDTO } from '@/src/types';
+
+// Lazy load GlowSummary to reduce initial bundle size
+const GlowSummary = dynamic(() => import('./GlowSummary'), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-[40px] p-6 lg:p-8 animate-pulse">
+      <div className="h-6 bg-gray-200 rounded mb-6 w-3/4 mx-auto" />
+      <div className="space-y-4 mb-6">
+        <div className="h-4 bg-gray-200 rounded w-full" />
+        <div className="h-4 bg-gray-200 rounded w-full" />
+      </div>
+      <div className="h-12 bg-gray-200 rounded-2xl" />
+    </div>
+  ),
+});
+
+// ═══════════════════════════════════════════════════════════════
+// SHIPPING COSTS (Hardcoded fallback - ideally fetched from API)
+// ═══════════════════════════════════════════════════════════════
+
+const SHIPPING_RATES: Record<ShippingZone, { domicilio: number; agencia: number; estimatedDays: string }> = {
+  LIMA_LOCAL: { domicilio: 10, agencia: 7, estimatedDays: '24 - 48h' },
+  LIMA_PROVINCIAS: { domicilio: 15, agencia: 12, estimatedDays: '2 - 3 días' },
+  COSTA_NACIONAL: { domicilio: 20, agencia: 15, estimatedDays: '3 - 5 días' },
+  SIERRA_SELVA: { domicilio: 25, agencia: 20, estimatedDays: '4 - 7 días' },
+  ZONAS_REMOTAS: { domicilio: 35, agencia: 28, estimatedDays: '5 - 10 días' },
+};
 
 export default function CartPage() {
   const { items, cartCount, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart();
-  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
-  const [isCheckoutValid, setIsCheckoutValid] = useState(false);
 
-  const finalTotal = totalPrice; // Sin costo de envío
+  // Form state
+  const [formData, setFormData] = useState<OlvaFormData | null>(null);
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [shippingZone, setShippingZone] = useState<ShippingZone>('LIMA_LOCAL');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Calculate shipping cost
+  const shippingRate = SHIPPING_RATES[shippingZone];
+  const shippingCost = formData?.shippingModality === 'AGENCIA'
+    ? shippingRate.agencia
+    : shippingRate.domicilio;
+
+  // Handle form changes from OlvaShippingForm
+  const handleFormChange = useCallback((data: OlvaFormData, valid: boolean) => {
+    setFormData(data);
+    setIsFormValid(valid);
+    setError(null);
+  }, []);
+
+  // Handle shipping zone changes
+  const handleShippingZoneChange = useCallback((zone: ShippingZone) => {
+    setShippingZone(zone);
+  }, []);
+
+  // Submit order
+  const handleSubmitOrder = async () => {
+    if (!formData || !isFormValid || items.length === 0) {
+      setError('Por favor completa todos los campos del formulario');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Prepare order data
+      const orderData: CreateOrderDTO = {
+        dni: formData.dni,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        address: `${formData.address}, ${formData.distrito}, ${formData.provincia}, ${formData.departamento}`,
+        department: formData.departamento,
+        province: formData.provincia,
+        shippingZone: formData.shippingZone,
+        shippingModality: formData.shippingModality,
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      };
+
+      // Call API
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al crear la orden');
+      }
+
+      const result = await response.json();
+
+      // Open WhatsApp link
+      if (result.whatsappLink) {
+        window.open(result.whatsappLink, '_blank');
+        // Clear cart after successful order
+        clearCart();
+      }
+    } catch (err) {
+      console.error('Error submitting order:', err);
+      setError(err instanceof Error ? err.message : 'Error al procesar el pedido');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Empty cart state
   if (cartCount === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24 pb-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <ShoppingBag className="w-20 h-20 mx-auto text-gray-300 mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+      <div className="min-h-screen bg-brand-cream pt-24 pb-16 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-3xl shadow-soft p-8 sm:p-12 text-center">
+            <div className="w-24 h-24 mx-auto mb-6 bg-brand-cream rounded-full flex items-center justify-center">
+              <ShoppingBag className="w-12 h-12 text-brand-brown/50" />
+            </div>
+            <h2 className="font-baloo text-2xl sm:text-3xl text-brand-brown mb-3">
               Tu carrito está vacío
             </h2>
-            <p className="text-gray-600 mb-6">
-              ¡Explora nuestra colección y encuentra tus zapatillas perfectas!
+            <p className="text-gray-600 mb-8">
+              ¡Descubre nuestros productos de skincare y comienza tu rutina de belleza! 🐱✨
             </p>
             <Link
               href="/"
-              className="inline-block bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition"
+              className="inline-flex items-center gap-2 bg-brand-orange text-white px-6 py-3 rounded-xl font-baloo hover:bg-brand-orange/90 transition shadow-soft hover:shadow-glow"
             >
+              <ArrowLeft className="w-4 h-4" />
               Explorar productos
             </Link>
           </div>
@@ -39,234 +147,166 @@ export default function CartPage() {
     );
   }
 
-
-  const handleCheckoutDataChange = (data: CheckoutData, isValid: boolean) => {
-    setCheckoutData(data);
-    setIsCheckoutValid(isValid);
-  };
-
-  const enviarWhatsApp = () => {
-    if (!checkoutData || !isCheckoutValid) {
-      alert('Por favor completa toda la información de entrega');
-      return;
-    }
-
-    // Formatear lista de productos
-    let productosTexto = '';
-    items.forEach((item) => {
-      const precio = item.salePrice || item.price;
-      const subtotal = precio * item.quantity;
-      productosTexto += `• ${item.brandName} ${item.productName}\n  Talla: ${item.size} | Cantidad: ${item.quantity}\n  S/ ${subtotal.toFixed(2)}\n\n`;
-    });
-
-    // Formatear información de entrega
-    let entregaTexto = '';
-    if (checkoutData.deliveryMethod === 'pickup') {
-      const store = STORE_LOCATIONS[checkoutData.storeLocation!];
-      entregaTexto = `*Método:* Recoger en tienda 🏪\n*Tienda:* ${store.name}\n*Dirección:* ${store.address}\n*Horario:* Lun-Sáb 10am-8pm | Dom 11am-6pm\n*Ver ubicación:* ${store.mapUrl}`;
-    } else {
-      const timeSlot = TIME_SLOTS[checkoutData.timeSlot!];
-      entregaTexto = `*Método:* Delivery 🚚\n*Nombre:* ${checkoutData.customerName}\n*Dirección:* ${checkoutData.address}`;
-      if (checkoutData.reference) {
-        entregaTexto += `\n*Referencia:* ${checkoutData.reference}`;
-      }
-      entregaTexto += `\n*Horario preferido:* ${timeSlot.label} (${timeSlot.time})\n\n📍 *Nota:* El costo de envío se coordinará según la ubicación`;
-    }
-
-    // Mensaje completo
-    const mensaje = `🛒 *NUEVO PEDIDO - SneakerShooes*
-
-📦 *PRODUCTOS:*
-${productosTexto}
-💰 *TOTAL: S/ ${finalTotal.toFixed(2)}*
-
-🚚 *ENTREGA:*
-${entregaTexto}
-
-¡Gracias por tu compra! 🎉`;
-
-    const url = `https://wa.me/51959619405?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
-  }
-
-
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-brand-cream lg:pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Carrito de Compras
+            <h1 className="font-baloo text-2xl sm:text-3xl text-brand-brown flex items-center gap-2">
+              <Image
+                src="/PurrfectGlowGatoIcon.png"
+                alt="The Purrfect Glow"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
+              Mi Carrito y Datos de Envío
             </h1>
-            <p className="text-gray-600">
-              {cartCount} {cartCount === 1 ? 'producto' : 'productos'}
+            <p className="text-gray-600 mt-1">
+              {cartCount} {cartCount === 1 ? 'producto' : 'productos'} en tu carrito
             </p>
           </div>
           <button
             onClick={clearCart}
-            className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-2 self-start sm:self-auto"
+            className="text-sm text-red-500 hover:text-red-600 font-medium flex items-center gap-2 self-start sm:self-auto transition"
           >
             <Trash2 className="w-4 h-4" />
             Vaciar carrito
           </button>
         </div>
 
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* Left Column - Products & Form */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Product List */}
+            <div className="space-y-3">
+              {items.map((item) => {
+                const price = item.salePrice || item.price;
+                const itemTotal = price * item.quantity;
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
-          {/* Lista de productos */}
-          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-            {items.map((item) => (
-              <div
-                key={`${item.productId}-${item.size}`}
-                className="bg-white rounded-lg shadow-sm p-4 sm:p-6 flex gap-3 sm:gap-6"
-              >
-                {/* Imagen */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
-                  {item.productImage ? (
-                    <Image
-                      src={item.productImage}
-                      alt={item.productName}
-                      className="w-full h-full object-cover"
-                      width={1000}
-                      height={1000}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                      Sin imagen
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between mb-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                        {item.brandName}
-                      </p>
-                      <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">
-                        {item.productName}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Talla: <span className="font-medium">{item.size}</span>
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => removeFromCart(item.productId, item.size)}
-                      className="text-gray-400 hover:text-red-500 transition ml-2"
-                      aria-label="Eliminar producto"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-4">
-                    {/* Contador de cantidad */}
-                    <div className="flex items-center border border-gray-300 rounded-lg">
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
-                        className="p-2 sm:p-2.5 hover:bg-gray-100 transition"
-                        aria-label="Disminuir cantidad"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="px-3 sm:px-4 font-medium text-gray-900">
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
-                        className="p-2 sm:p-2.5 hover:bg-gray-100 transition"
-                        aria-label="Aumentar cantidad"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Precio */}
-                    <div className="text-right">
-                      {item.salePrice ? (
-                        <div>
-                          <p className="font-bold text-red-600 text-sm sm:text-base">
-                            S/ {(item.salePrice * item.quantity).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-gray-400 line-through">
-                            S/ {(item.price * item.quantity).toFixed(2)}
-                          </p>
-                        </div>
+                return (
+                  <div
+                    key={`${item.productId}-${item.size}`}
+                    className="bg-white rounded-2xl border-2 border-brand-cream-dark p-4 flex gap-4 hover:border-brand-orange/30 transition"
+                  >
+                    {/* Product Image */}
+                    <div className="w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-brand-cream">
+                      {item.productImage ? (
+                        <Image
+                          src={item.productImage}
+                          alt={item.productName}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <p className="font-bold text-gray-900 text-sm sm:text-base">
-                          S/ {(item.price * item.quantity).toFixed(2)}
-                        </p>
+                        <div className="w-full h-full flex items-center justify-center text-brand-brown/30 text-xs">
+                          Sin imagen
+                        </div>
                       )}
                     </div>
-                  </div>
-                </div>
-              </div>
-            ))}
 
-            {/* Formulario de Checkout */}
-            <CheckoutForm onCheckoutDataChange={handleCheckoutDataChange} />
+                    {/* Product Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-gray-900 truncate">
+                            {item.productName}
+                          </h3>
+                          {item.brandName && (
+                            <p className="text-xs text-gray-500">
+                              {item.brandName}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => removeFromCart(item.productId, item.size)}
+                          className="text-gray-400 hover:text-red-500 transition p-1 -mt-1 -mr-1"
+                          aria-label="Eliminar producto"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-3">
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-1 bg-brand-cream rounded-xl">
+                          <button
+                            onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
+                            className="p-2 hover:bg-brand-cream-dark rounded-l-xl transition"
+                            aria-label="Disminuir cantidad"
+                          >
+                            <Minus className="w-3 h-3 text-brand-brown" />
+                          </button>
+                          <span className="px-3 font-medium text-brand-brown min-w-[2rem] text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
+                            className="p-2 hover:bg-brand-cream-dark rounded-r-xl transition"
+                            aria-label="Aumentar cantidad"
+                          >
+                            <Plus className="w-3 h-3 text-brand-brown" />
+                          </button>
+                        </div>
+
+                        {/* Price */}
+                        <div className="text-right">
+                          <p className="font-baloo text-brand-brown">
+                            S/ {itemTotal.toFixed(2)}
+                          </p>
+                          {item.salePrice && (
+                            <p className="text-xs text-gray-400 line-through">
+                              S/ {(item.price * item.quantity).toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Olva Shipping Form */}
+            <OlvaShippingForm
+              onFormChange={handleFormChange}
+              onShippingZoneChange={handleShippingZoneChange}
+            />
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm">
+                ⚠️ {error}
+              </div>
+            )}
           </div>
 
-          {/* Resumen del pedido */}
+          {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 lg:sticky lg:top-24">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">
-                Resumen del pedido
-              </h2>
-
-              <div className="space-y-3 mb-4 pb-4 border-b">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
-                  <span className="font-medium">S/ {totalPrice.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <div className="flex justify-between text-lg font-bold text-gray-900 mb-6">
-                <span>Total</span>
-                <span>S/ {finalTotal.toFixed(2)}</span>
-              </div>
-
-              <button
-                onClick={enviarWhatsApp}
-                disabled={!isCheckoutValid}
-                className={`w-full py-3 sm:py-4 rounded-lg font-medium mb-3 transition text-sm sm:text-base ${isCheckoutValid
-                    ? 'bg-black text-white hover:bg-gray-800'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-              >
-                {isCheckoutValid ? '✓ Enviar pedido por WhatsApp' : 'Completa la información de entrega'}
-              </button>
-
-              <Link
-                href="/"
-                className="w-full border-2 border-gray-300 py-2 sm:py-3 rounded-lg font-medium hover:bg-gray-50 transition text-center block text-sm sm:text-base"
-              >
-                Seguir comprando
-              </Link>
-
-              {/* Beneficios */}
-              <div className="mt-6 space-y-3 text-sm">
-                <div className="flex items-start gap-3">
-                  <span className="text-xl">↩️</span>
-                  <div>
-                    <p className="font-medium">Devolución gratis</p>
-                    <p className="text-gray-600 text-xs">Tienes 30 días para devolver</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-xl">🔒</span>
-                  <div>
-                    <p className="font-medium">Pago seguro</p>
-                    <p className="text-gray-600 text-xs">Protegemos tu información</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <GlowSummary
+              subtotal={totalPrice}
+              shippingCost={shippingCost}
+              estimatedDays={shippingRate.estimatedDays}
+              isFormValid={isFormValid && items.length > 0}
+              isLoading={isLoading}
+              onSubmit={handleSubmitOrder}
+            />
           </div>
         </div>
 
+        {/* Back to Shop Link */}
+        <div className="mt-2 hidden lg:block">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-brand-brown hover:text-brand-brown-dark font-medium transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Seguir comprando
+          </Link>
+        </div>
       </div>
     </div>
   );

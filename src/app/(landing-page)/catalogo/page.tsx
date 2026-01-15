@@ -2,6 +2,9 @@ import { getProducts } from '@/src/services/product';
 import { getAllTags } from '@/src/services/product';
 import CatalogClient from './CatalogClient';
 
+// ISR: Revalidate every hour (3600 seconds) for optimal CDN caching
+export const revalidate = 3600;
+
 interface PageProps {
     searchParams: Promise<{ skin?: string }>;
 }

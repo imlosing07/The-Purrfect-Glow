@@ -11,7 +11,7 @@ import {
   Product
 } from '@/src/types';
 
-// Include para obtener tags completos
+// Full include for single product detail view
 const productInclude = {
   tags: {
     include: {
@@ -19,6 +19,30 @@ const productInclude = {
     }
   }
 } satisfies Prisma.ProductInclude;
+
+// Optimized select for catalog listing (reduces data transfer)
+const productSelectForList = {
+  id: true,
+  name: true,
+  price: true,
+  images: true,
+  summary: true,
+  isAvailable: true,
+  featured: true,
+  createdAt: true,
+  tags: {
+    select: {
+      tag: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          type: true
+        }
+      }
+    }
+  }
+} satisfies Prisma.ProductSelect;
 
 // Transformar producto de DB a tipo frontend
 function transformProductFromDB(product: any): Product {
@@ -29,7 +53,7 @@ function transformProductFromDB(product: any): Product {
 }
 
 /**
- * Obtiene productos con filtros y paginación
+ * Obtiene productos con filtros y paginación (optimized for listing)
  */
 export async function getProducts(options: ProductQueryDTO): Promise<PaginatedProductsResponse> {
   const {
@@ -86,7 +110,7 @@ export async function getProducts(options: ProductQueryDTO): Promise<PaginatedPr
     const [products, total] = await Promise.all([
       prismaClientGlobal.product.findMany({
         where,
-        include: productInclude,
+        select: productSelectForList, // Using optimized select instead of include
         take: limit,
         skip: (page - 1) * limit,
         orderBy
@@ -287,7 +311,7 @@ export async function getTotalProducts(): Promise<number> {
 }
 
 /**
- * Obtiene productos destacados
+ * Obtiene productos destacados (optimized for listing)
  */
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   try {
@@ -296,7 +320,7 @@ export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
         featured: true,
         isAvailable: true 
       },
-      include: productInclude,
+      select: productSelectForList, // Optimized select
       take: limit,
       orderBy: { createdAt: 'desc' }
     });

@@ -16,6 +16,15 @@ const skinTypeColors: Record<string, string> = {
     'todo-tipo-piel': 'bg-brand-cream border-brand-yellow',
 };
 
+const skinTypeImages: Record<string, string> = {
+    'piel-grasa': '/categoryImages/pielGrasa.webp',
+    'piel-seca': '/categoryImages/pielSeca.webp',
+    'piel-mixta': '/categoryImages/pielMixta.webp',
+    'piel-sensible': '/categoryImages/pielSensible.webp',
+    'piel-acneica': '/categoryImages/pielAcneica.webp',
+    'todo-tipo-piel': '/categoryImages/todoTipoPiel.webp',
+};
+
 const skinTypeActiveColors: Record<string, string> = {
     'piel-grasa': 'bg-pastel-blue ring-2 ring-pastel-blue ring-offset-2',
     'piel-seca': 'bg-brand-orange ring-2 ring-brand-orange ring-offset-2',
@@ -155,9 +164,21 @@ export default function CatalogClient({ initialProducts, tags, initialSkinType }
                                 }
               `}
                         >
-                            {/* Icon placeholder */}
-                            <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center">
-                                <span className="text-lg">🐱</span>
+                            {/* Category Image - Larger and centered */}
+                            <div className="w-16 h-16 rounded-2xl bg-white overflow-hidden border border-white/20 flex-shrink-0 relative shadow-inner">
+                                {skinTypeImages[tag.slug] ? (
+                                    <Image
+                                        src={skinTypeImages[tag.slug]}
+                                        alt={tag.name}
+                                        fill
+                                        className="object-cover scale-150" // Scale up slightly to fill space
+                                        sizes="56px"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <span className="text-2xl">🐱</span>
+                                    </div>
+                                )}
                             </div>
                             <span className="text-xs font-nunito font-medium text-brand-brown whitespace-nowrap">
                                 {tag.name.replace('Piel ', '')}
@@ -315,9 +336,21 @@ export default function CatalogClient({ initialProducts, tags, initialSkinType }
                                             }
                     `}
                                     >
-                                        {/* Icon placeholder */}
-                                        <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-sm">🐱</span>
+                                        {/* Category Image - Larger and centered */}
+                                        <div className="w-12 h-12 rounded-xl bg-white overflow-hidden border border-white/20 flex-shrink-0 relative shadow-sm">
+                                            {skinTypeImages[tag.slug] ? (
+                                                <Image
+                                                    src={skinTypeImages[tag.slug]}
+                                                    alt={tag.name}
+                                                    fill
+                                                    className="object-cover scale-150"
+                                                    sizes="48px"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <span className="text-sm">🐱</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <span className="font-nunito text-sm font-medium text-brand-brown">
                                             {tag.name}

@@ -2,6 +2,9 @@ import HeroInteractive from './components/HeroInteractive';
 import FeaturedProducts from './components/FeaturedProducts';
 import SocialMediaSection from './components/SocialMediaSection';
 
+// ISR: Revalidate every hour for optimal CDN caching
+export const revalidate = 3600;
+
 export default function HomePage() {
   return (
     <div className="max-w-full">

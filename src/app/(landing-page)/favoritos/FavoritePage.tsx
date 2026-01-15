@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { getUserWishlist } from '@/src/actions/wishlist';
 
 // ═══════════════════════════════════════════════════════════════
 // FAVORITE CARD COMPONENT
@@ -227,27 +228,30 @@ export default function FavoritesPage() {
   const { wishlistIds, toggleFavorite, isAuthenticated } = useWishlist();
   const { addToCart } = useCart();
 
-  // Fetch products from API
+  // In your FavoritesPage component, replace the useEffect with:
   useEffect(() => {
-    async function fetchProducts() {
+    async function fetchFavorites() {
       try {
-        const response = await fetch('/api/products');
-        const json = await response.json();
-        const productsList: Product[] = json?.data?.products ?? [];
-        setProducts(productsList);
+        const result = await getUserWishlist();
+        if (result.success) {
+          setProducts(result.products as Product[]);
+        }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching favorites:', error);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchProducts();
-  }, []);
 
-  // Filter products that are in wishlist
-  const favoriteProducts = useMemo(() => {
-    return products.filter(product => wishlistIds.has(product.id));
-  }, [products, wishlistIds]);
+    if (isAuthenticated) {
+      fetchFavorites();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  // And remove the filtering since products are already favorites:
+  const favoriteProducts = products;
 
   const isEmpty = favoriteProducts.length === 0;
   const totalPrice = favoriteProducts.reduce((sum, p) => sum + p.price, 0);

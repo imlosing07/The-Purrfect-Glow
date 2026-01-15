@@ -168,7 +168,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus): Promis
 }
 
 /**
- * Obtiene todas las órdenes con filtros opcionales
+ * Obtiene todas las órdenes con filtros opcionales (optimized for list view)
  */
 export async function getOrders(options: {
   status?: OrderStatus;
@@ -183,7 +183,39 @@ export async function getOrders(options: {
     const [orders, total] = await Promise.all([
       prismaClientGlobal.order.findMany({
         where,
-        include: orderInclude,
+        select: {
+          id: true,
+          dni: true,
+          fullName: true,
+          phone: true,
+          address: true,
+          department: true,
+          province: true,
+          shippingZone: true,
+          shippingModality: true,
+          subtotal: true,
+          shippingCost: true,
+          totalAmount: true,
+          status: true,
+          whatsappLink: true,
+          createdAt: true,
+          updatedAt: true,
+          items: {
+            select: {
+              id: true,
+              quantity: true,
+              unitPrice: true,
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  images: true,
+                  price: true
+                }
+              }
+            }
+          }
+        },
         take: limit,
         skip: (page - 1) * limit,
         orderBy: { createdAt: 'desc' }

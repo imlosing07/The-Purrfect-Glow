@@ -1,4 +1,4 @@
-import { UserRole } from "@/src/app/lib/constants/product-constants";
+import { UserRole } from "@/src/types";
 
 export interface UserProps {
   id: string;

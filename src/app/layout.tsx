@@ -12,6 +12,17 @@ export const metadata: Metadata = {
     default: 'The Purrfect Glow',
   },
   description: 'Skincare coreano de alta calidad. Descubre productos K-Beauty para todo tipo de piel 🌸',
+  icons: {
+    icon: '/PurrfectGlowGatoIcon.png',
+    apple: '/PurrfectGlowGatoIcon.png',
+  },
+  openGraph: {
+    title: 'The Purrfect Glow',
+    description: 'Skincare coreano K-Beauty para todo tipo de piel. Productos de alta calidad para tu rutina de belleza 🌸',
+    type: 'website',
+    locale: 'es_PE',
+    siteName: 'The Purrfect Glow',
+  },
 };
 
 const baloo = Baloo_2({

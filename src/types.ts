@@ -125,7 +125,7 @@ export interface CreateProductDTO {
   summary?: string;
   benefits?: string[];
   howToUse?: string;
-  routineStep?: string;
+  routineStep?: RoutineStep | null;
   usageTime?: UsageTime;
   keyIngredients?: Record<string, string>;
   isAvailable?: boolean;
@@ -140,7 +140,7 @@ export interface UpdateProductDTO {
   summary?: string;
   benefits?: string[];
   howToUse?: string;
-  routineStep?: string;
+  routineStep?: RoutineStep | null;
   usageTime?: UsageTime;
   keyIngredients?: Record<string, string>;
   isAvailable?: boolean;

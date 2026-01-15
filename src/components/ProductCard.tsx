@@ -5,6 +5,7 @@ import { useCart } from '@/src/app/lib/contexts/CartContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 // Tag color mapping based on TagType
 const getTagColors = (type: TagType): string => {
@@ -32,6 +33,7 @@ export default function ProductCard({
     showAddToCart = true,
 }: ProductCardProps) {
     const { addToCart } = useCart();
+    const router = useRouter();
     const [isAdding, setIsAdding] = useState(false);
 
     // Get the first image or placeholder
@@ -55,8 +57,11 @@ export default function ProductCard({
             price: product.price,
         });
 
-        // Visual feedback
-        setTimeout(() => setIsAdding(false), 600);
+        // Brief visual feedback then navigate to cart
+        setTimeout(() => {
+            setIsAdding(false);
+            router.push('/carrito');
+        }, 400);
     };
 
     const cardContent = (
@@ -92,6 +97,8 @@ export default function ProductCard({
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                        placeholder="blur"
+                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMCwsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAYH/8QAIhAAAgIBAwQDAAAAAAAAAAAAAQIDEQQABRIGEyExQVFh/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAZEQEBAAMBAAAAAAAAAAAAAAABAgADESH/2gAMAwEAAhEDEEQ/ANXxNw3DO3l8uPJLPbSQxcneVIZWKgAkEWeYJ/fGNhY9xUWjLMw1dpF//9k="
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-brand-brown/40">

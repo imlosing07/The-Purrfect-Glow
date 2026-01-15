@@ -24,6 +24,19 @@ export async function toggleFavorite(productId: string) {
 
     const userId = session.user.id;
 
+    // Verificar que el producto existe
+    const product = await prismaClientGlobal.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      return {
+        success: false,
+        message: 'Producto no encontrado',
+        isInWishlist: false,
+      };
+    }
+
     // Buscar si ya existe el item en la wishlist
     const existingItem = await prismaClientGlobal.wishlistItem.findUnique({
       where: {
@@ -44,6 +57,8 @@ export async function toggleFavorite(productId: string) {
 
       // Revalidar rutas relevantes
       revalidatePath('/favoritos');
+      revalidatePath('/catalogo');
+      revalidatePath(`/producto/${productId}`);
       
       return {
         success: true,
@@ -61,6 +76,8 @@ export async function toggleFavorite(productId: string) {
 
       // Revalidar rutas relevantes
       revalidatePath('/favoritos');
+      revalidatePath('/catalogo');
+      revalidatePath(`/producto/${productId}`);
       
       return {
         success: true,
@@ -98,7 +115,15 @@ export async function getUserWishlist() {
         userId: session.user.id,
       },
       include: {
-        product: true,
+        product: {
+          include: {
+            tags: {
+              include: {
+                tag: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -107,9 +132,21 @@ export async function getUserWishlist() {
 
     // Mapear a formato de producto directo
     const products = wishlistItems.map((item) => ({
-      ...item.product,
+      id: item.product.id,
+      name: item.product.name,
       price: Number(item.product.price),
-      salePrice: item.product.salePrice ? Number(item.product.salePrice) : null,
+      images: item.product.images,
+      summary: item.product.summary,
+      benefits: item.product.benefits,
+      howToUse: item.product.howToUse,
+      routineStep: item.product.routineStep,
+      usageTime: item.product.usageTime,
+      keyIngredients: item.product.keyIngredients,
+      isAvailable: item.product.isAvailable,
+      featured: item.product.featured,
+      tags: item.product.tags.map((pt) => pt.tag),
+      createdAt: item.product.createdAt,
+      updatedAt: item.product.updatedAt,
     }));
 
     return {
@@ -196,6 +233,42 @@ export async function getUserWishlistIds() {
     return {
       success: false,
       productIds: [],
+    };
+  }
+}
+
+/**
+ * Remove all items from wishlist (useful for "move all to cart")
+ */
+export async function clearWishlist() {
+  try {
+    const session = await auth();
+    
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: 'Debes iniciar sesión',
+      };
+    }
+
+    await prismaClientGlobal.wishlistItem.deleteMany({
+      where: {
+        userId: session.user.id,
+      },
+    });
+
+    revalidatePath('/favoritos');
+    revalidatePath('/catalogo');
+
+    return {
+      success: true,
+      message: 'Wishlist vaciada exitosamente',
+    };
+  } catch (error) {
+    console.error('Error in clearWishlist:', error);
+    return {
+      success: false,
+      message: 'Error al vaciar favoritos',
     };
   }
 }
