@@ -1,5 +1,6 @@
 import Navbar from './components/Navbar';
 import BottomNavigation from './components/BottomNavigation';
+import FloatingSocialButtons from './components/FloatingSocialButtons';
 
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +18,9 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
         {/* Mobile: padding bottom for bottom navigation */}
         <div className="h-24 lg:h-0" />
       </main>
+
+      {/* Floating Social Buttons */}
+      <FloatingSocialButtons />
 
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />

@@ -21,7 +21,7 @@ export default function BottomNavigation() {
     }
 
     return (
-        <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-soft-lg border border-white/50 px-2 py-2">
                 <div className="flex items-center justify-around">
                     {bottomNavItems.map((item) => {
