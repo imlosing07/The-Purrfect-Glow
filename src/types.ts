@@ -275,6 +275,7 @@ export interface Cart {
 // ═══════════════════════════════════════════════════════════════
 
 export interface WhatsAppOrderData {
+  orderNumber: string;
   customerName: string;
   dni: string;
   phone: string;

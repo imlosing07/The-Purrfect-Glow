@@ -95,6 +95,7 @@ export async function createOrder(data: CreateOrderDTO): Promise<OrderResponse> 
 
     // 6. Generar link de WhatsApp
     const whatsappLink = generateWhatsAppLink({
+      orderNumber: order.id.slice(0, 8).toUpperCase(),
       customerName: data.fullName,
       dni: data.dni,
       phone: data.phone,

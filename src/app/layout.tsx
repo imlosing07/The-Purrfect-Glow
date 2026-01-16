@@ -25,9 +25,7 @@ export const metadata: Metadata = {
     url: 'https://the-purrfect-glow.vercel.app/',
     images: [
       {
-        url: 'https://ogcdn.net/ff2341cb-cbbb-4b55-ab5d-d141aa8706fb/v3/https%3A%2F%2Fopengraph.b-cdn.net%2Fproduction%2Fimages%2Fe6562a9a-ebe8-4364-b9f6-f86f0700ff58.png%3Ftoken%3DrCS22OoHEQ-MQmmpwav8F5S0j4AjCFRhfh3it95ZGZU%26height%3D1489%26width%3D1200%26expires%3D33304592541/cover/rgba(255%2C%20246%2C%20230%2C%201)/og.png',
-        width: 1200,
-        height: 630,
+        url: 'https://the-purrfect-glow.vercel.app/OGImage.png',
         alt: 'The Purrfect Glow - Cuidado Coreano de Calidad',
       },
     ],

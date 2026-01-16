@@ -4,6 +4,7 @@
 import { ShippingModality, ShippingZone, SHIPPING_ZONES_INFO, SHIPPING_MODALITY_INFO } from '@/src/types';
 
 export interface WhatsAppOrderData {
+  orderNumber: string;
   customerName: string;
   dni: string;
   phone: string;
@@ -43,7 +44,7 @@ export function generateWhatsAppLink(data: WhatsAppOrderData): string {
 He elegido estos productos para mi *Purrfect Glow*:
 
 ---------------------------
-${box} *RESUMEN DEL PEDIDO:*
+${box} *PEDIDO #${data.orderNumber}*
 ${itemsList}
 ---------------------------
 
