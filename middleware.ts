@@ -4,14 +4,16 @@ import { NextResponse } from 'next/server';
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
-  const isAdmin = req.auth?.user?.role === 'ADMIN';
+  const userRole = req.auth?.user?.role;
 
-  // Proteger rutas del dashboard
+  // Proteger rutas del dashboard - solo admins
   if (pathname.startsWith('/dashboard')) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL('/login', req.url));
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(loginUrl);
     }
-    if (!isAdmin) {
+    if (userRole !== 'ADMIN') {
       return NextResponse.redirect(new URL('/', req.url));
     }
   }
@@ -22,6 +24,5 @@ export default auth((req) => {
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    // Puedes agregar más rutas protegidas aquí
   ],
 };
