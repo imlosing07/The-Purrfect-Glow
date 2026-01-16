@@ -36,7 +36,7 @@ export async function createOrder(data: CreateOrderDTO): Promise<OrderResponse> 
     // 1. Obtener los productos y verificar disponibilidad
     const productIds = data.items.map(item => item.productId);
     const products = await prismaClientGlobal.product.findMany({
-      where: { 
+      where: {
         id: { in: productIds },
         isAvailable: true
       }

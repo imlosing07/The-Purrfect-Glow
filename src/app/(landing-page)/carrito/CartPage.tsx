@@ -105,10 +105,17 @@ export default function CartPage() {
 
       const result = await response.json();
 
-      // Open WhatsApp link
       if (result.whatsappLink) {
-        window.open(result.whatsappLink, '_blank');
-        // Clear cart after successful order
+        // Usar anchor dinámico para máxima compatibilidad con encoding
+        const anchor = document.createElement('a');
+        anchor.href = result.whatsappLink;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+
+        // Limpiar carrito después de abrir WhatsApp
         clearCart();
       }
     } catch (err) {

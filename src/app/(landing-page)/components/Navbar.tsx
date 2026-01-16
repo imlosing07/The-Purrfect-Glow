@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Heart, User, LogOut, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSession, signOut } from 'next-auth/react';
-import { useState, useRef, useEffect } from 'react';
+import { ShoppingBag } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 import { useCart } from '@/src/app/lib/contexts/CartContext';
+import UserAccount from './UserAccount';
 
 // Same navigation as bottom nav for consistency
 const navLinks = [
@@ -19,26 +19,10 @@ export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const { items } = useCart();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const isAuthenticated = status === 'authenticated' && session?.user;
+  const isAdmin = isAuthenticated && session?.user?.role === 'ADMIN';
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/' });
-  };
 
   return (
     <>
@@ -122,107 +106,14 @@ export default function Navbar() {
               </Link>
 
               {/* User Account Dropdown */}
-              <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 p-2 rounded-xl hover:bg-brand-cream-dark/50 transition-colors"
-                >
-                  {isAuthenticated ? (
-                    <>
-                      {session.user?.image ? (
-                        <Image
-                          src={session.user.image}
-                          alt="Profile"
-                          width={28}
-                          height={28}
-                          className="rounded-full"
-                        />
-                      ) : (
-                        <div className="w-7 h-7 bg-pastel-purple rounded-full flex items-center justify-center">
-                          <User size={16} className="text-brand-brown" />
-                        </div>
-                      )}
-                      <span className="font-nunito text-sm text-brand-brown max-w-[100px] truncate">
-                        {session.user?.name?.split(' ')[0] || 'Mi cuenta'}
-                      </span>
-                      <ChevronDown size={16} className={`text-brand-brown/60 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-7 h-7 bg-brand-cream-dark rounded-full flex items-center justify-center">
-                        <User size={16} className="text-brand-brown/60" />
-                      </div>
-                      <span className="font-nunito text-sm text-brand-brown/70">
-                        Invitado
-                      </span>
-                      <ChevronDown size={16} className={`text-brand-brown/60 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
-                    </>
-                  )}
-                </button>
-
-                {/* Dropdown Menu */}
-                <AnimatePresence>
-                  {showUserMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-soft-lg border border-brand-cream-dark overflow-hidden z-50"
-                    >
-                      {isAuthenticated ? (
-                        <>
-                          {/* User info header */}
-                          <div className="px-4 py-3 bg-brand-cream/30 border-b border-brand-cream-dark">
-                            <p className="font-nunito font-semibold text-brand-brown text-sm truncate">
-                              {session.user?.name}
-                            </p>
-                            <p className="font-nunito text-xs text-brand-brown/60 truncate">
-                              {session.user?.email}
-                            </p>
-                          </div>
-
-                          <div className="p-2">
-                            <Link
-                              href="/favoritos"
-                              onClick={() => setShowUserMenu(false)}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
-                            >
-                              <Heart size={18} className="text-pastel-purple" />
-                              <span className="font-nunito text-sm text-brand-brown">Mis Favoritos</span>
-                            </Link>
-
-                            <button
-                              onClick={handleSignOut}
-                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
-                            >
-                              <LogOut size={18} className="text-red-400" />
-                              <span className="font-nunito text-sm text-brand-brown">Cerrar sesión</span>
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="p-4 text-center">
-                          <div className="mb-3">
-                            <span className="text-3xl">🐱</span>
-                          </div>
-                          <p className="font-nunito text-sm text-brand-brown/70 mb-3">
-                            Únete al Club Purrfect Glow y obtén beneficios exclusivos
-                          </p>
-                          <Link
-                            href="/login"
-                            onClick={() => setShowUserMenu(false)}
-                            className="block w-full py-2.5 rounded-xl font-nunito font-semibold text-white text-sm transition-colors"
-                            style={{ backgroundColor: '#FFB559' }}
-                          >
-                            Iniciar sesión
-                          </Link>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <UserAccount
+                isAuthenticated={!!isAuthenticated}
+                isAdmin={!!isAdmin}
+                userName={session?.user?.name}
+                userEmail={session?.user?.email}
+                userImage={session?.user?.image}
+                variant="desktop"
+              />
             </div>
           </div>
         </div>
@@ -247,36 +138,14 @@ export default function Navbar() {
 
           {/* User Profile Icon - Right side */}
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            {isAuthenticated ? (
-              <Link
-                href="/favoritos"
-                className="p-2 rounded-xl"
-              >
-                {session?.user?.image ? (
-                  <Image
-                    src={session.user.image}
-                    alt="Profile"
-                    width={32}
-                    height={32}
-                    className="rounded-full ring-2 ring-brand-orange/30"
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-pastel-purple rounded-full flex items-center justify-center">
-                    <User size={18} className="text-white" />
-                  </div>
-                )}
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-orange/10 rounded-full"
-              >
-                <User size={18} className="text-brand-orange" />
-                <span className="font-nunito text-xs font-medium text-brand-orange">
-                  Unirme
-                </span>
-              </Link>
-            )}
+            <UserAccount
+              isAuthenticated={!!isAuthenticated}
+              isAdmin={!!isAdmin}
+              userName={session?.user?.name}
+              userEmail={session?.user?.email}
+              userImage={session?.user?.image}
+              variant="mobile"
+            />
           </div>
         </div>
       </header>
