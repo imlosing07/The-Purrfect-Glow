@@ -22,6 +22,15 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'es_PE',
     siteName: 'The Purrfect Glow',
+    url: 'https://the-purrfect-glow.vercel.app/',
+    images: [
+      {
+        url: 'https://the-purrfect-glow.vercel.app/PurrfectGlowGatoLogoMobile.webp',
+        width: 1200,
+        height: 630,
+        alt: 'The Purrfect Glow - K-Beauty Skincare',
+      },
+    ],
   },
 };
 
