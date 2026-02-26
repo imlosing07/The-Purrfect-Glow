@@ -5,6 +5,7 @@ import { SessionProvider } from 'next-auth/react';
 import { Baloo_2, Nunito } from 'next/font/google';
 import { WishlistProvider } from '@/src/app/lib/contexts/WishlistContext';
 import { CartProvider } from '@/src/app/lib/contexts/CartContext';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: {
@@ -63,6 +64,7 @@ export default async function RootLayout({
             </WishlistProvider>
           </CartProvider>
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
