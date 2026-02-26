@@ -12,7 +12,7 @@ export default function PedidosPage() {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
     const [updatingId, setUpdatingId] = useState<string | null>(null);
-    const [stats, setStats] = useState({ PENDING: 0, SHIPPED: 0, DELIVERED: 0 });
+    const [stats, setStats] = useState({ PENDING: 0, PAID: 0, SHIPPED: 0, DELIVERED: 0 });
     const { showToast } = useToast();
 
     // Fetch orders
@@ -71,6 +71,7 @@ export default function PedidosPage() {
 
             const statusMessages: Record<OrderStatus, string> = {
                 [OrderStatus.PENDING]: '¡Pedido marcado como pendiente! ⏳',
+                [OrderStatus.PAID]: '¡Pedido marcado como pagado! 💳',
                 [OrderStatus.SHIPPED]: '¡Pedido enviado! 📦✨',
                 [OrderStatus.DELIVERED]: '¡Pedido entregado! 🎉',
             };
@@ -92,6 +93,7 @@ export default function PedidosPage() {
     const statusTabs: { key: OrderStatus | 'ALL'; label: string; icon: string; color: string }[] = [
         { key: 'ALL', label: 'Todos', icon: '📋', color: 'bg-white' },
         { key: OrderStatus.PENDING, label: 'Pendientes', icon: '⏳', color: 'bg-status-pending' },
+        { key: OrderStatus.PAID, label: 'Pagados', icon: '💳', color: 'bg-emerald-100' },
         { key: OrderStatus.SHIPPED, label: 'Enviados', icon: '📦', color: 'bg-status-shipped' },
         { key: OrderStatus.DELIVERED, label: 'Entregados', icon: '✅', color: 'bg-status-delivered' },
     ];

@@ -14,6 +14,12 @@ const statusConfig: Record<OrderStatus, { label: string; bg: string; text: strin
         text: 'text-brand-brown',
         icon: '⏳',
     },
+    [OrderStatus.PAID]: {
+        label: 'Pagado',
+        bg: 'bg-emerald-100',
+        text: 'text-emerald-800',
+        icon: '💳',
+    },
     [OrderStatus.SHIPPED]: {
         label: 'Enviado',
         bg: 'bg-status-shipped',
@@ -58,7 +64,7 @@ interface StatusSelectorProps {
 }
 
 export function StatusSelector({ currentStatus, onStatusChange, disabled = false }: StatusSelectorProps) {
-    const statuses: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.SHIPPED, OrderStatus.DELIVERED];
+    const statuses: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.PAID, OrderStatus.SHIPPED, OrderStatus.DELIVERED];
 
     return (
         <div className="flex gap-2 flex-wrap">

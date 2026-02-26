@@ -246,6 +246,7 @@ export async function getOrdersCountByStatus(): Promise<Record<OrderStatus, numb
 
     const result: Record<OrderStatus, number> = {
       PENDING: 0,
+      PAID: 0,
       SHIPPED: 0,
       DELIVERED: 0
     };

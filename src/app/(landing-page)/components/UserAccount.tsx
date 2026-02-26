@@ -111,6 +111,16 @@ export default function UserAccount({
                                     </Link>
                                 )}
 
+                                {/* Profile Link - Always visible for authenticated users */}
+                                <Link
+                                    href="/perfil"
+                                    onClick={() => setShowUserMenu(false)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-blue/20 transition-colors"
+                                >
+                                    <User size={18} className="text-pastel-blue" />
+                                    <span className="font-nunito text-sm text-brand-brown">Mi Perfil</span>
+                                </Link>
+
                                 <button
                                     onClick={handleSignOut}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
@@ -208,6 +218,16 @@ export default function UserAccount({
                                             <span className="font-nunito text-sm text-brand-brown">Mis Favoritos</span>
                                         </Link>
                                     )}
+
+                                    {/* Profile Link - Always visible for authenticated users */}
+                                    <Link
+                                        href="/perfil"
+                                        onClick={() => setShowUserMenu(false)}
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-blue/20 transition-colors"
+                                    >
+                                        <User size={18} className="text-pastel-blue" />
+                                        <span className="font-nunito text-sm text-brand-brown">Mi Perfil</span>
+                                    </Link>
 
                                     <button
                                         onClick={handleSignOut}

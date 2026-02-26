@@ -57,11 +57,10 @@ export default function ProductCard({
             price: product.price,
         });
 
-        // Brief visual feedback then navigate to cart
+        // Brief visual feedback, then reset (no redirect)
         setTimeout(() => {
             setIsAdding(false);
-            router.push('/carrito');
-        }, 400);
+        }, 1200);
     };
 
     const cardContent = (

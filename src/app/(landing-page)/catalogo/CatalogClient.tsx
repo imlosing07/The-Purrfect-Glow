@@ -128,21 +128,6 @@ export default function CatalogClient({ initialProducts, tags, initialSkinType }
 
     return (
         <div className="min-h-screen bg-brand-cream/30">
-            {/* Mobile Search Bar - Fixed */}
-            <div className="lg:hidden sticky top-0 z-40 bg-white/95 backdrop-blur-sm shadow-sm px-4 py-3">
-                <div className="relative">
-                    <input
-                        type="text"
-                        placeholder="Buscar productos..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-full border border-brand-cream bg-white focus:ring-2 focus:ring-brand-orange focus:border-transparent font-nunito text-sm"
-                    />
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-brown/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-            </div>
 
             {/* Mobile Skin Type Carousel */}
             <div className="lg:hidden overflow-hidden py-4 px-4 bg-white border-b border-brand-cream">
@@ -303,21 +288,6 @@ export default function CatalogClient({ initialProducts, tags, initialSkinType }
                 {/* Sidebar */}
                 <aside className="w-64 flex-shrink-0">
                     <div className="sticky top-24 bg-white rounded-3xl p-6 shadow-soft space-y-6">
-                        {/* Search */}
-                        <div>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Buscar..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 rounded-full border border-brand-cream bg-brand-cream/30 focus:ring-2 focus:ring-brand-orange focus:border-transparent font-nunito text-sm"
-                                />
-                                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-brown/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
-                        </div>
 
                         {/* Skin Type */}
                         <div>
