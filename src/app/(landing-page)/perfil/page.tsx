@@ -4,7 +4,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
-    title: 'Mi Perfil | The Purrfect Glow',
+    title: 'Mi Perfil',
     description: 'Gestiona tu perfil y datos de envío.',
 };
 

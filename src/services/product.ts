@@ -28,6 +28,7 @@ const productSelectForList = {
   images: true,
   summary: true,
   isAvailable: true,
+  stock: true,
   featured: true,
   createdAt: true,
   tags: {
@@ -168,6 +169,7 @@ export async function createProduct(data: CreateProductDTO): Promise<Product> {
         routineStep: data.routineStep,
         usageTime: data.usageTime || 'BOTH',
         keyIngredients: data.keyIngredients || {},
+        stock: data.stock ?? 10,
         isAvailable: data.isAvailable ?? true,
         featured: data.featured ?? false,
         tags: {
@@ -316,9 +318,9 @@ export async function getTotalProducts(): Promise<number> {
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   try {
     const products = await prismaClientGlobal.product.findMany({
-      where: { 
+      where: {
         featured: true,
-        isAvailable: true 
+        isAvailable: true
       },
       select: productSelectForList, // Optimized select
       take: limit,

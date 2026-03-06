@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/src/app/lib/contexts/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
-import OlvaShippingForm, { OlvaFormData } from './OlvaShippingForm';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, AlertCircle, Loader2, User } from 'lucide-react';
 import { ShippingZone, CreateOrderDTO } from '@/src/types';
 
 // Lazy load GlowSummary to reduce initial bundle size
@@ -36,38 +37,72 @@ const SHIPPING_RATES: Record<ShippingZone, { domicilio: number; agencia: number;
   ZONAS_REMOTAS: { domicilio: 35, agencia: 28, estimatedDays: '5 - 10 días' },
 };
 
+// Profile data interface
+interface UserProfile {
+  name: string;
+  dni: string;
+  phone: string;
+  department: string;
+  province: string;
+  district: string;
+  address: string;
+  reference: string;
+  locationUrl: string;
+  shippingZone: ShippingZone | null;
+  shippingModality: 'DOMICILIO' | 'AGENCIA';
+  profileComplete: boolean;
+}
+
 export default function CartPage() {
   const { items, cartCount, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { data: session, status: authStatus } = useSession();
+  const router = useRouter();
 
-  // Form state
-  const [formData, setFormData] = useState<OlvaFormData | null>(null);
-  const [isFormValid, setIsFormValid] = useState(false);
-  const [shippingZone, setShippingZone] = useState<ShippingZone>('LIMA_LOCAL');
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Calculate shipping cost
+  // Fetch profile when authenticated
+  useEffect(() => {
+    if (authStatus === 'authenticated') {
+      setLoadingProfile(true);
+      fetch('/api/user/profile')
+        .then(res => res.json())
+        .then(data => {
+          if (data.profile) {
+            setProfile(data.profile);
+          }
+        })
+        .catch(err => console.error('Error loading profile:', err))
+        .finally(() => setLoadingProfile(false));
+    }
+  }, [authStatus]);
+
+  // Calculate shipping cost from profile
+  const shippingZone: ShippingZone = profile?.shippingZone || 'LIMA_LOCAL';
   const shippingRate = SHIPPING_RATES[shippingZone];
-  const shippingCost = formData?.shippingModality === 'AGENCIA'
+  const shippingModality = profile?.shippingModality || 'DOMICILIO';
+  const shippingCost = shippingModality === 'AGENCIA'
     ? shippingRate.agencia
     : shippingRate.domicilio;
 
-  // Handle form changes from OlvaShippingForm
-  const handleFormChange = useCallback((data: OlvaFormData, valid: boolean) => {
-    setFormData(data);
-    setIsFormValid(valid);
-    setError(null);
-  }, []);
-
-  // Handle shipping zone changes
-  const handleShippingZoneChange = useCallback((zone: ShippingZone) => {
-    setShippingZone(zone);
-  }, []);
-
   // Submit order
   const handleSubmitOrder = async () => {
-    if (!formData || !isFormValid || items.length === 0) {
-      setError('Por favor completa todos los campos del formulario');
+    // Guard: must be authenticated
+    if (authStatus !== 'authenticated') {
+      router.push('/login');
+      return;
+    }
+
+    // Guard: profile must be complete
+    if (!profile?.profileComplete) {
+      router.push('/perfil');
+      return;
+    }
+
+    if (items.length === 0) {
+      setError('Tu carrito está vacío');
       return;
     }
 
@@ -75,27 +110,30 @@ export default function CartPage() {
     setError(null);
 
     try {
-      // Prepare order data
       const orderData: CreateOrderDTO = {
-        dni: formData.dni,
-        fullName: formData.fullName,
-        phone: formData.phone,
-        address: `${formData.address}, ${formData.distrito}, ${formData.provincia}, ${formData.departamento}`,
-        department: formData.departamento,
-        province: formData.provincia,
-        shippingZone: formData.shippingZone,
-        shippingModality: formData.shippingModality,
+        dni: profile.dni,
+        fullName: profile.name,
+        phone: profile.phone,
+        address: profile.address,
+        department: profile.department,
+        province: profile.province,
+        shippingZone: shippingZone,
+        shippingModality: shippingModality,
         items: items.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
       };
 
-      // Call API
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
+        body: JSON.stringify({
+          ...orderData,
+          district: profile.district,
+          reference: profile.reference,
+          locationUrl: profile.locationUrl,
+        }),
       });
 
       if (!response.ok) {
@@ -106,17 +144,15 @@ export default function CartPage() {
       const result = await response.json();
 
       if (result.whatsappLink) {
-        // Usar anchor dinámico para máxima compatibilidad con encoding
-        const anchor = document.createElement('a');
-        anchor.href = result.whatsappLink;
-        anchor.target = '_blank';
-        anchor.rel = 'noopener noreferrer';
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
+        // Open WhatsApp in a new tab first
+        window.open(result.whatsappLink, '_blank', 'noopener,noreferrer');
 
-        // Limpiar carrito después de abrir WhatsApp
-        clearCart();
+        // Delay clearing the cart to ensure the WhatsApp tab has time to load
+        setTimeout(() => {
+          clearCart();
+        }, 1500);
+      } else {
+        setError('La orden se creó pero no se generó el enlace de WhatsApp. Contacta al soporte.');
       }
     } catch (err) {
       console.error('Error submitting order:', err);
@@ -125,6 +161,11 @@ export default function CartPage() {
       setIsLoading(false);
     }
   };
+
+  // Can submit?
+  const canSubmit = authStatus === 'authenticated'
+    && profile?.profileComplete === true
+    && items.length > 0;
 
   // Empty cart state
   if (cartCount === 0) {
@@ -168,7 +209,7 @@ export default function CartPage() {
                 height={40}
                 className="w-10 h-10"
               />
-              Mi Carrito y Datos de Envío
+              Mi Carrito
             </h1>
             <p className="text-gray-600 mt-1">
               {cartCount} {cartCount === 1 ? 'producto' : 'productos'} en tu carrito
@@ -185,7 +226,7 @@ export default function CartPage() {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Left Column - Products & Form */}
+          {/* Left Column - Products + Shipping Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Product List */}
             <div className="space-y-3">
@@ -277,11 +318,79 @@ export default function CartPage() {
               })}
             </div>
 
-            {/* Olva Shipping Form */}
-            <OlvaShippingForm
-              onFormChange={handleFormChange}
-              onShippingZoneChange={handleShippingZoneChange}
-            />
+            {/* Shipping / Profile Info Card */}
+            {authStatus === 'loading' || loadingProfile ? (
+              <div className="bg-white rounded-3xl p-6 flex items-center justify-center gap-3 text-brand-brown/60">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="font-nunito text-sm">Cargando datos de envío...</span>
+              </div>
+            ) : authStatus !== 'authenticated' ? (
+              <div className="bg-gradient-to-br from-pastel-orange/30 to-pastel-pink/20 rounded-3xl p-6 text-center">
+                <AlertCircle className="w-10 h-10 text-brand-orange mx-auto mb-3" />
+                <h3 className="font-baloo text-lg text-brand-brown mb-2">
+                  Inicia sesión para comprar
+                </h3>
+                <p className="font-nunito text-sm text-brand-brown/70 mb-4">
+                  Necesitas una cuenta para realizar tu pedido
+                </p>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 bg-brand-orange text-white px-6 py-3 rounded-2xl font-nunito font-semibold text-sm hover:bg-brand-orange/90 transition shadow-soft"
+                >
+                  <User className="w-4 h-4" />
+                  Iniciar Sesión
+                </Link>
+              </div>
+            ) : !profile?.profileComplete ? (
+              <div className="bg-gradient-to-br from-pastel-orange/30 to-pastel-pink/20 rounded-3xl p-6 text-center">
+                <AlertCircle className="w-10 h-10 text-brand-orange mx-auto mb-3" />
+                <h3 className="font-baloo text-lg text-brand-brown mb-2">
+                  Completa tu perfil
+                </h3>
+                <p className="font-nunito text-sm text-brand-brown/70 mb-4">
+                  Necesitas completar tu dirección y datos para realizar el envío
+                </p>
+                <Link
+                  href="/perfil"
+                  className="inline-flex items-center gap-2 bg-brand-orange text-white px-6 py-3 rounded-2xl font-nunito font-semibold text-sm hover:bg-brand-orange/90 transition shadow-soft"
+                >
+                  <User className="w-4 h-4" />
+                  Completar Perfil
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-white rounded-3xl shadow-soft p-6">
+                <h3 className="font-baloo text-lg text-brand-brown mb-4 flex items-center gap-2">
+                  📍 Datos de envío
+                </h3>
+                <div className="space-y-2 font-nunito text-sm text-brand-brown/80">
+                  <p><strong>Nombre:</strong> {profile.name}</p>
+                  <p><strong>DNI:</strong> {profile.dni}</p>
+                  <p><strong>Teléfono:</strong> {profile.phone}</p>
+                  <p><strong>Dirección:</strong> {profile.address}{profile.district ? `, ${profile.district}` : ''}, {profile.province}, {profile.department}</p>
+                  {profile.reference && <p><strong>Referencia:</strong> {profile.reference}</p>}
+                  {profile.locationUrl && (
+                    <p>
+                      <strong>Ubicación:</strong>{' '}
+                      <a
+                        href={profile.locationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-orange hover:text-brand-orange/80 underline transition"
+                      >
+                        Ver en Google Maps 📍
+                      </a>
+                    </p>
+                  )}
+                </div>
+                <Link
+                  href="/perfil"
+                  className="inline-flex items-center gap-1 mt-4 text-brand-orange font-nunito text-sm font-semibold hover:text-brand-orange/80 transition"
+                >
+                  ✏️ Editar datos
+                </Link>
+              </div>
+            )}
 
             {/* Error Message */}
             {error && (
@@ -297,7 +406,7 @@ export default function CartPage() {
               subtotal={totalPrice}
               shippingCost={shippingCost}
               estimatedDays={shippingRate.estimatedDays}
-              isFormValid={isFormValid && items.length > 0}
+              isFormValid={canSubmit}
               isLoading={isLoading}
               onSubmit={handleSubmitOrder}
             />

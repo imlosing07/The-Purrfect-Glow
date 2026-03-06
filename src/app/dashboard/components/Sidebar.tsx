@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+    LayoutDashboard,
     Package,
     ShoppingBag,
     Menu,
@@ -16,6 +17,13 @@ import {
 } from 'lucide-react';
 
 const navItems = [
+    {
+        name: 'Inicio',
+        href: '/dashboard',
+        icon: LayoutDashboard,
+        description: 'Resumen y métricas',
+        exact: true,
+    },
     {
         name: 'Inventario',
         href: '/dashboard/inventario',
@@ -93,7 +101,9 @@ export default function Sidebar() {
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-2">
                     {navItems.map((item) => {
-                        const isActive = pathname.startsWith(item.href);
+                        const isActive = (item as any).exact
+                            ? pathname === item.href
+                            : pathname.startsWith(item.href);
                         const Icon = item.icon;
 
                         return (

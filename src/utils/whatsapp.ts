@@ -9,6 +9,14 @@ export interface WhatsAppOrderData {
   dni: string;
   phone: string;
   items: { name: string; quantity: number; price: number }[];
+  // Dirección de envío
+  address?: string;
+  department?: string;
+  province?: string;
+  district?: string;
+  reference?: string;
+  locationUrl?: string;
+  // Shipping
   shippingZone: ShippingZone;
   shippingModality: ShippingModality;
   shippingCost: number;
@@ -33,12 +41,29 @@ export function generateWhatsAppLink(data: WhatsAppOrderData): string {
   const money = String.fromCodePoint(0x1F4B0);  // 💰
   const paws = String.fromCodePoint(0x1F43E);   // 🐾
   const cat = String.fromCodePoint(0x1F431);    // 🐱
+  const pin = String.fromCodePoint(0x1F4CD);    // 📍
+  const mapIcon = String.fromCodePoint(0x1F5FA); // 🗺️
 
   const itemsList = data.items
     .map(item => `${sparkle} *${item.name}* (x${item.quantity})`)
     .join('\n');
 
-  // Construimos el mensaje sin el símbolo '¡' inicial que causa ruido
+  // Construir destino legible: "Arequipa, Arequipa, Alto Selva Alegre"
+  let destino = '';
+  if (data.department) {
+    destino = data.department;
+    if (data.province) destino += `, ${data.province}`;
+    if (data.district) destino += `, ${data.district}`;
+  }
+
+  // Dirección completa, referencia y ubicación Maps
+  let addressBlock = '';
+  if (data.address) {
+    addressBlock += `\n${pin} Direccion: ${data.address}`;
+    if (data.reference) addressBlock += `\n${pin} Referencia: ${data.reference}`;
+    if (data.locationUrl) addressBlock += `\n${mapIcon} Ubicacion Maps: ${data.locationUrl}`;
+  }
+
   const message = `Hola Solicorn! ${flower}${cat}
 
 He elegido estos productos para mi *Purrfect Glow*:
@@ -54,9 +79,9 @@ ${user} *MIS DATOS:*
 - Cel: ${data.phone}
 
 ${truck} *DETALLES DE ENVIO:*
-- Destino: ${data.shippingZone}
+- Destino: ${destino || 'No especificado'}
 - Costo: S/ ${data.shippingCost.toFixed(2)}
-- Entrega estimada: ${data.estimatedDays}
+- Entrega estimada: ${data.estimatedDays}${addressBlock}
 
 ${money} *TOTAL A PAGAR: S/ ${data.totalAmount.toFixed(2)}*
 

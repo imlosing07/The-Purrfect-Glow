@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, X, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface SearchResult {
     id: string;
@@ -109,58 +108,53 @@ export default function GlobalSearch({ variant = 'desktop' }: GlobalSearchProps)
                 </div>
 
                 {/* Mobile Results Dropdown */}
-                <AnimatePresence>
-                    {isOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-brand-cream-dark max-h-[60vh] overflow-y-auto z-50"
+                {isOpen && (
+                    <div
+                        className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-brand-cream-dark max-h-[60vh] overflow-y-auto z-50"
+                    >
+                        <div className="p-2 space-y-1">
+                            {results.map((product) => (
+                                <Link
+                                    key={product.id}
+                                    href={`/producto/${product.id}`}
+                                    onClick={handleResultClick}
+                                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-cream/50 transition-colors"
+                                >
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-brand-cream flex-shrink-0">
+                                        {product.images?.[0] ? (
+                                            <Image
+                                                src={product.images[0]}
+                                                alt={product.name}
+                                                width={48}
+                                                height={48}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-brand-brown/30">
+                                                <Search size={16} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-nunito text-sm font-medium text-brand-brown truncate">
+                                            {product.name}
+                                        </p>
+                                        <p className="font-baloo text-sm text-brand-orange">
+                                            S/ {product.price.toFixed(2)}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                        <Link
+                            href={`/catalogo?search=${encodeURIComponent(query)}`}
+                            onClick={handleResultClick}
+                            className="block p-3 text-center text-sm font-nunito text-brand-orange hover:bg-brand-cream/30 border-t border-brand-cream"
                         >
-                            <div className="p-2 space-y-1">
-                                {results.map((product) => (
-                                    <Link
-                                        key={product.id}
-                                        href={`/producto/${product.id}`}
-                                        onClick={handleResultClick}
-                                        className="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-cream/50 transition-colors"
-                                    >
-                                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-brand-cream flex-shrink-0">
-                                            {product.images?.[0] ? (
-                                                <Image
-                                                    src={product.images[0]}
-                                                    alt={product.name}
-                                                    width={48}
-                                                    height={48}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-brand-brown/30">
-                                                    <Search size={16} />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-nunito text-sm font-medium text-brand-brown truncate">
-                                                {product.name}
-                                            </p>
-                                            <p className="font-baloo text-sm text-brand-orange">
-                                                S/ {product.price.toFixed(2)}
-                                            </p>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                            <Link
-                                href={`/catalogo?search=${encodeURIComponent(query)}`}
-                                onClick={handleResultClick}
-                                className="block p-3 text-center text-sm font-nunito text-brand-orange hover:bg-brand-cream/30 border-t border-brand-cream"
-                            >
-                                Ver todos los resultados ({results.length})
-                            </Link>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                            Ver todos los resultados ({results.length})
+                        </Link>
+                    </div>
+                )}
             </div>
         );
     }
@@ -193,63 +187,58 @@ export default function GlobalSearch({ variant = 'desktop' }: GlobalSearchProps)
             </div>
 
             {/* Desktop Results Dropdown */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-brand-cream-dark max-h-96 overflow-y-auto z-50"
+            {isOpen && (
+                <div
+                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-brand-cream-dark max-h-96 overflow-y-auto z-50"
+                >
+                    <div className="p-2 space-y-1">
+                        {results.map((product) => (
+                            <Link
+                                key={product.id}
+                                href={`/producto/${product.id}`}
+                                onClick={handleResultClick}
+                                className="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-cream/50 transition-colors"
+                            >
+                                <div className="w-14 h-14 rounded-lg overflow-hidden bg-brand-cream flex-shrink-0">
+                                    {product.images?.[0] ? (
+                                        <Image
+                                            src={product.images[0]}
+                                            alt={product.name}
+                                            width={56}
+                                            height={56}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-brand-brown/30">
+                                            <Search size={20} />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-nunito font-medium text-brand-brown truncate">
+                                        {product.name}
+                                    </p>
+                                    {product.summary && (
+                                        <p className="font-nunito text-xs text-brand-brown/60 truncate">
+                                            {product.summary}
+                                        </p>
+                                    )}
+                                    <p className="font-baloo text-sm text-brand-orange">
+                                        S/ {product.price.toFixed(2)}
+                                    </p>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                    <Link
+                        href={`/catalogo?search=${encodeURIComponent(query)}`}
+                        onClick={handleResultClick}
+                        className="block p-3 text-center text-sm font-nunito text-brand-orange hover:bg-brand-cream/30 border-t border-brand-cream"
                     >
-                        <div className="p-2 space-y-1">
-                            {results.map((product) => (
-                                <Link
-                                    key={product.id}
-                                    href={`/producto/${product.id}`}
-                                    onClick={handleResultClick}
-                                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-cream/50 transition-colors"
-                                >
-                                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-brand-cream flex-shrink-0">
-                                        {product.images?.[0] ? (
-                                            <Image
-                                                src={product.images[0]}
-                                                alt={product.name}
-                                                width={56}
-                                                height={56}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-brand-brown/30">
-                                                <Search size={20} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-nunito font-medium text-brand-brown truncate">
-                                            {product.name}
-                                        </p>
-                                        {product.summary && (
-                                            <p className="font-nunito text-xs text-brand-brown/60 truncate">
-                                                {product.summary}
-                                            </p>
-                                        )}
-                                        <p className="font-baloo text-sm text-brand-orange">
-                                            S/ {product.price.toFixed(2)}
-                                        </p>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                        <Link
-                            href={`/catalogo?search=${encodeURIComponent(query)}`}
-                            onClick={handleResultClick}
-                            className="block p-3 text-center text-sm font-nunito text-brand-orange hover:bg-brand-cream/30 border-t border-brand-cream"
-                        >
-                            Ver todos los resultados ({results.length})
-                        </Link>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        Ver todos los resultados ({results.length})
+                    </Link>
+                </div>
+            )}
         </div>
     );
 }

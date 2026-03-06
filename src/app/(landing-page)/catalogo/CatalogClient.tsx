@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Product, Tag, TagType } from '@/src/types';
 import ProductCard from '@/src/components/ProductCard';
 import Image from 'next/image';
@@ -190,98 +189,89 @@ export default function CatalogClient({ initialProducts, tags, initialSkinType }
             </div>
 
             {/* Mobile Filter Drawer */}
-            <AnimatePresence>
-                {showMobileFilters && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/50 z-50 lg:hidden"
-                            onClick={() => setShowMobileFilters(false)}
-                        />
-                        <motion.div
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            exit={{ y: '100%' }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[80vh] overflow-y-auto lg:hidden"
-                        >
-                            <div className="sticky top-0 bg-white p-4 border-b flex items-center justify-between">
-                                <h3 className="font-baloo font-bold text-lg text-brand-brown">Filtros</h3>
-                                <button
-                                    onClick={() => setShowMobileFilters(false)}
-                                    className="p-2 hover:bg-brand-cream rounded-full"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
+            {showMobileFilters && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/50 z-50 lg:hidden"
+                        onClick={() => setShowMobileFilters(false)}
+                    />
+                    <div
+                        className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[80vh] overflow-y-auto lg:hidden transition-transform duration-300"
+                    >
+                        <div className="sticky top-0 bg-white p-4 border-b flex items-center justify-between">
+                            <h3 className="font-baloo font-bold text-lg text-brand-brown">Filtros</h3>
+                            <button
+                                onClick={() => setShowMobileFilters(false)}
+                                className="p-2 hover:bg-brand-cream rounded-full"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
 
-                            <div className="p-4 space-y-6">
-                                {/* Categories */}
-                                <div>
-                                    <h4 className="font-nunito font-semibold text-brand-brown mb-3">Categoría</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {categoryTags.map((tag) => (
-                                            <button
-                                                key={tag.id}
-                                                onClick={() => toggleCategory(tag.slug)}
-                                                className={`
+                        <div className="p-4 space-y-6">
+                            {/* Categories */}
+                            <div>
+                                <h4 className="font-nunito font-semibold text-brand-brown mb-3">Categoría</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {categoryTags.map((tag) => (
+                                        <button
+                                            key={tag.id}
+                                            onClick={() => toggleCategory(tag.slug)}
+                                            className={`
                           px-3 py-1.5 rounded-full text-sm font-nunito transition-all
                           ${selectedCategories.includes(tag.slug)
-                                                        ? 'bg-brand-orange text-white'
-                                                        : 'bg-brand-cream text-brand-brown hover:bg-brand-cream-dark'
-                                                    }
+                                                    ? 'bg-brand-orange text-white'
+                                                    : 'bg-brand-cream text-brand-brown hover:bg-brand-cream-dark'
+                                                }
                         `}
-                                            >
-                                                {tag.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Concerns */}
-                                <div>
-                                    <h4 className="font-nunito font-semibold text-brand-brown mb-3">Preocupación</h4>
-                                    <div className="space-y-2">
-                                        {concernTags.map((tag) => (
-                                            <label
-                                                key={tag.id}
-                                                className="flex items-center gap-3 cursor-pointer"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedConcerns.includes(tag.slug)}
-                                                    onChange={() => toggleConcern(tag.slug)}
-                                                    className="w-4 h-4 rounded border-brand-brown/30 text-brand-orange focus:ring-brand-orange"
-                                                />
-                                                <span className="font-nunito text-sm text-brand-brown">{tag.name}</span>
-                                            </label>
-                                        ))}
-                                    </div>
+                                        >
+                                            {tag.name}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
-                            <div className="sticky bottom-0 bg-white p-4 border-t flex gap-3">
-                                <button
-                                    onClick={clearAllFilters}
-                                    className="flex-1 py-2.5 border border-brand-brown/20 rounded-full font-nunito text-sm text-brand-brown"
-                                >
-                                    Limpiar
-                                </button>
-                                <button
-                                    onClick={() => setShowMobileFilters(false)}
-                                    className="flex-1 py-2.5 bg-brand-orange text-white rounded-full font-nunito text-sm font-semibold"
-                                >
-                                    Ver {filteredProducts.length} productos
-                                </button>
+                            {/* Concerns */}
+                            <div>
+                                <h4 className="font-nunito font-semibold text-brand-brown mb-3">Preocupación</h4>
+                                <div className="space-y-2">
+                                    {concernTags.map((tag) => (
+                                        <label
+                                            key={tag.id}
+                                            className="flex items-center gap-3 cursor-pointer"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedConcerns.includes(tag.slug)}
+                                                onChange={() => toggleConcern(tag.slug)}
+                                                className="w-4 h-4 rounded border-brand-brown/30 text-brand-orange focus:ring-brand-orange"
+                                            />
+                                            <span className="font-nunito text-sm text-brand-brown">{tag.name}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+                        </div>
+
+                        <div className="sticky bottom-0 bg-white p-4 border-t flex gap-3">
+                            <button
+                                onClick={clearAllFilters}
+                                className="flex-1 py-2.5 border border-brand-brown/20 rounded-full font-nunito text-sm text-brand-brown"
+                            >
+                                Limpiar
+                            </button>
+                            <button
+                                onClick={() => setShowMobileFilters(false)}
+                                className="flex-1 py-2.5 bg-brand-orange text-white rounded-full font-nunito text-sm font-semibold"
+                            >
+                                Ver {filteredProducts.length} productos
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Desktop Layout */}
             <div className="hidden lg:flex max-w-7xl mx-auto px-4 py-8 gap-8">
@@ -409,25 +399,15 @@ export default function CatalogClient({ initialProducts, tags, initialSkinType }
                             </button>
                         </div>
                     ) : (
-                        <motion.div
+                        <div
                             className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4"
-                            layout
                         >
-                            <AnimatePresence mode="popLayout">
-                                {filteredProducts.map((product) => (
-                                    <motion.div
-                                        key={product.id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        transition={{ duration: 0.2 }}
-                                    >
-                                        <ProductCard product={product} />
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </motion.div>
+                            {filteredProducts.map((product) => (
+                                <div key={product.id}>
+                                    <ProductCard product={product} />
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </main>
             </div>
@@ -449,25 +429,15 @@ export default function CatalogClient({ initialProducts, tags, initialSkinType }
                         </button>
                     </div>
                 ) : (
-                    <motion.div
+                    <div
                         className="grid grid-cols-2 gap-3"
-                        layout
                     >
-                        <AnimatePresence mode="popLayout">
-                            {filteredProducts.map((product) => (
-                                <motion.div
-                                    key={product.id}
-                                    layout
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ duration: 0.2 }}
-                                >
-                                    <ProductCard product={product} variant="compact" />
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </motion.div>
+                        {filteredProducts.map((product) => (
+                            <div key={product.id}>
+                                <ProductCard product={product} variant="compact" />
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
         </div>

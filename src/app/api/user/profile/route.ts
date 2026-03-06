@@ -25,9 +25,11 @@ export async function GET() {
                 district: true,
                 address: true,
                 reference: true,
+                locationUrl: true,
                 shippingZone: true,
                 shippingModality: true,
                 profileComplete: true,
+                purrPoints: true,
             },
         });
 
@@ -56,6 +58,7 @@ export async function PUT(request: Request) {
             district,
             address,
             reference,
+            locationUrl,
             shippingZone,
             shippingModality,
         } = body;
@@ -86,6 +89,7 @@ export async function PUT(request: Request) {
                 district,
                 address,
                 reference: reference || null,
+                locationUrl: locationUrl || null,
                 shippingZone: shippingZone as ShippingZone,
                 shippingModality: shippingModality as ShippingModality,
                 profileComplete: true,

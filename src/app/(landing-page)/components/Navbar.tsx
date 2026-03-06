@@ -4,17 +4,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ShoppingBag, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCart } from '@/src/app/lib/contexts/CartContext';
 import UserAccount from './UserAccount';
 import GlobalSearch from './GlobalSearch';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 // Same navigation as bottom nav for consistency
 const navLinks = [
   { name: 'Inicio', href: '/' },
-  { name: 'Catalogo', href: '/catalogo' }
+  { name: 'Catalogo', href: '/catalogo' },
+  { name: 'Favoritos', href: '/favoritos' }
 ];
 
 export default function Navbar() {
@@ -26,6 +26,20 @@ export default function Navbar() {
   const isAuthenticated = status === 'authenticated' && session?.user;
   const isAdmin = isAuthenticated && session?.user?.role === 'ADMIN';
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
+
+  // Close mobile search when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target as Node)) {
+        setShowMobileSearch(false);
+      }
+    };
+    if (showMobileSearch) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileSearch]);
 
   return (
     <>
@@ -70,8 +84,7 @@ export default function Navbar() {
                   >
                     {link.name}
                     {isActive && (
-                      <motion.div
-                        layoutId="navbar-indicator"
+                      <div
                         className="absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-orange rounded-full"
                       />
                     )}
@@ -112,7 +125,7 @@ export default function Navbar() {
       {/* ═══════════════════════════════════════════════════════════════
           MOBILE TOP BAR
           ═══════════════════════════════════════════════════════════════ */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-brand-cream/95 backdrop-blur-sm border-b border-brand-brown/5">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-brand-cream/95 backdrop-blur-sm border-b border-brand-brown/5" ref={mobileSearchRef}>
         <div className="flex items-center justify-between px-3 relative">
           {/* Search Button - Left side */}
           <button
@@ -134,15 +147,8 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* User Profile Icon - Right side */}
-          <UserAccount
-            isAuthenticated={!!isAuthenticated}
-            isAdmin={!!isAdmin}
-            userName={session?.user?.name}
-            userEmail={session?.user?.email}
-            userImage={session?.user?.image}
-            variant="mobile"
-          />
+          {/* Spacer to keep logo centered */}
+          <div className="w-10" />
         </div>
 
         {/* Mobile Search Dropdown */}

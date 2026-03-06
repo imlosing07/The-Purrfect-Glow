@@ -23,10 +23,9 @@ enum TagType {
 }
 
 enum OrderStatus {
-  PENDING // Registrado, link de WhatsApp generado
+  PENDING_PAYMENT // Registrado, link de WhatsApp generado
   PAID // Pago confirmado
-  SHIPPED // Enviado por Olva
-  DELIVERED // Entregado al cliente
+  SHIPPED // Enviado por Olva (estado final)
 }
 
 enum ShippingZone {
@@ -76,6 +75,7 @@ model Product {
   usageTime      UsageTime    @default(BOTH)
   keyIngredients Json? // { "Niacinamida": "Ilumina y reduce poros", ... }
 
+  stock       Int     @default(10)
   isAvailable Boolean @default(true)
   featured    Boolean @default(false)
 
@@ -146,13 +146,14 @@ model Order {
   userId String?
 
   // Datos del cliente
-  dni        String
-  fullName   String
-  phone      String
-  address    String
-  reference  String? // Referencia de la dirección
-  department String
-  province   String
+  dni         String
+  fullName    String
+  phone       String
+  address     String
+  reference   String? // Referencia de la dirección
+  locationUrl String? // URL de Google Maps para ubicación precisa
+  department  String
+  province    String
 
   // Shipping info
   shippingZone     ShippingZone
@@ -164,7 +165,7 @@ model Order {
   totalAmount  Float
 
   // Estado y tracking
-  status       OrderStatus @default(PENDING)
+  status       OrderStatus @default(PENDING_PAYMENT)
   whatsappLink String? // Link generado para seguimiento
 
   // Items del pedido
@@ -211,9 +212,11 @@ model User {
   district         String?
   address          String?
   reference        String? // Referencia de la dirección
+  locationUrl      String? // URL de Google Maps para ubicación precisa
   shippingZone     ShippingZone?
   shippingModality ShippingModality?
   profileComplete  Boolean           @default(false)
+  purrPoints       Int               @default(0)
 
   accounts      Account[]
   sessions      Session[]

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
@@ -73,67 +72,38 @@ function SkinTypeCard({ card, isActive, onHover, onClick, index, size = 'desktop
     const cardHeight = isDesktop ? 155 : 125;
 
     return (
-        <motion.div
-            className="relative cursor-pointer"
+        <div
+            className="relative cursor-pointer transition-transform duration-200 hover:scale-[1.08] active:scale-95"
             style={{
                 zIndex: isActive ? 25 : 10 + index,
+                transform: `rotate(${card.rotation}deg)`,
             }}
-            whileHover={{
-                scale: 1.08,
-                rotate: card.rotation * 0.3,
-                zIndex: 30,
-            }}
-            whileTap={{ scale: 0.95 }}
             onMouseEnter={isDesktop ? onHover : undefined}
             onClick={onClick}
-            initial={{ opacity: 0, y: 20, rotate: card.rotation }}
-            animate={{
-                opacity: 1,
-                y: 0,
-                rotate: card.rotation,
-            }}
-            transition={{
-                delay: index * 0.08,
-                type: "spring",
-                stiffness: 200,
-                damping: 20,
-            }}
         >
             {/* Mascot - Above card */}
-            <AnimatePresence>
-                {isActive && (
-                    <motion.div
-                        layoutId={isDesktop ? "mascot-desktop" : "mascot-mobile"}
-                        className="absolute pointer-events-none left-1/2"
-                        style={{
-                            top: isDesktop ? '-60px' : '-50px',
-                            transform: 'translateX(-50%)',
-                            zIndex: 50,
-                        }}
-                        initial={{ y: 20, opacity: 0, scale: 0.7 }}
-                        animate={{ y: 0, opacity: 1, scale: 1 }}
-                        exit={{ y: -10, opacity: 0, scale: 0.7 }}
-                        transition={{
-                            type: "spring",
-                            stiffness: 280,
-                            damping: 25
-                        }}
-                    >
-                        <Image
-                            src="/PurrfectGlowGatoIcon.png"
-                            alt="Purrfect Glow Mascot"
-                            width={isDesktop ? 85 : 60}
-                            height={isDesktop ? 85 : 60}
-                            className="drop-shadow-lg"
-                            priority
-                        />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {isActive && (
+                <div
+                    className="absolute pointer-events-none left-1/2 -translate-x-1/2 transition-all duration-300"
+                    style={{
+                        top: isDesktop ? '-60px' : '-50px',
+                        zIndex: 50,
+                    }}
+                >
+                    <Image
+                        src="/PurrfectGlowGatoIcon.png"
+                        alt="Purrfect Glow Mascot"
+                        width={isDesktop ? 85 : 60}
+                        height={isDesktop ? 85 : 60}
+                        className="drop-shadow-lg"
+                        priority
+                    />
+                </div>
+            )}
 
             {/* Card Container - Polaroid Style */}
             <div
-                className="relative bg-white rounded-xl overflow-hidden"
+                className="relative bg-white rounded-xl overflow-hidden transition-all duration-200"
                 style={{
                     width: cardWidth,
                     height: cardHeight,
@@ -141,7 +111,6 @@ function SkinTypeCard({ card, isActive, onHover, onClick, index, size = 'desktop
                         ? '0 10px 30px rgba(193, 128, 70, 0.35), 0 4px 10px rgba(0,0,0,0.12)'
                         : '0 6px 18px rgba(193, 128, 70, 0.16), 0 2px 6px rgba(0,0,0,0.06)',
                     border: isActive ? '3px solid #FFB559' : '3px solid white',
-                    transition: 'border-color 0.2s ease',
                 }}
             >
                 {/* Image Area */}
@@ -178,42 +147,33 @@ function SkinTypeCard({ card, isActive, onHover, onClick, index, size = 'desktop
                     </span>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }
 
 // Section title component with sparkles
 function SectionTitle({ isMobile = false }: { isMobile?: boolean }) {
     return (
-        <motion.div
-            className="relative flex items-center justify-center gap-3"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-        >
-            <motion.span
-                className={isMobile ? "text-xl" : "text-2xl"}
+        <div className="relative flex items-center justify-center gap-3">
+            <span
+                className={`${isMobile ? "text-xl" : "text-2xl"} animate-pulse`}
                 style={{ color: '#FFB559' }}
-                animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
                 ✨
-            </motion.span>
+            </span>
             <h2
                 className={`font-baloo font-bold text-center ${isMobile ? 'text-xl' : 'text-2xl xl:text-3xl'}`}
                 style={{ color: '#C18046' }}
             >
                 Selecciona tu Tipo de Piel
             </h2>
-            <motion.span
-                className={isMobile ? "text-xl" : "text-2xl"}
+            <span
+                className={`${isMobile ? "text-xl" : "text-2xl"} animate-pulse`}
                 style={{ color: '#FFB559' }}
-                animate={{ rotate: [0, -15, 15, 0], scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
             >
                 ✨
-            </motion.span>
-        </motion.div>
+            </span>
+        </div>
     );
 }
 
@@ -244,14 +204,12 @@ export default function HeroInteractive() {
         if (isNavigating) return;
 
         if (isMobile) {
-            // Mobile: move cat, then navigate after brief delay
             setActiveCardId(cardId);
             setIsNavigating(true);
             setTimeout(() => {
                 router.push(`/catalogo?skin=${slug}`);
-            }, 300); // Brief moment to see the cat move
+            }, 300);
         } else {
-            // Desktop: navigate immediately
             router.push(`/catalogo?skin=${slug}`);
         }
     }, [router, isMobile, isNavigating]);
@@ -269,16 +227,13 @@ export default function HeroInteractive() {
                 />
             </div>
 
-            {/* ═══════════════════════════════════════════════════════════════
-          DESKTOP LAYOUT
-          ═══════════════════════════════════════════════════════════════ */}
+            {/* DESKTOP LAYOUT */}
             <div className="hidden lg:block relative z-10">
                 <div className="max-w-7xl mx-auto px-8 min-h-[550px]">
                     <div className="flex items-center justify-between h-full py-6">
 
                         {/* Left Side - Card Grid with Title */}
                         <div className="w-[48%] flex flex-col items-center gap-6">
-                            {/* Prominent Section Title */}
                             <SectionTitle />
 
                             {/* Card Grid (2 columns x 3 rows) */}
@@ -308,16 +263,13 @@ export default function HeroInteractive() {
 
                         {/* Right Side - Text Content with frosted glass container */}
                         <div className="w-[46%] flex justify-center">
-                            <motion.div
+                            <div
                                 className="backdrop-blur-md px-10 py-10 space-y-6"
                                 style={{
                                     backgroundColor: 'rgba(255, 255, 255, 0.4)',
                                     borderRadius: '40px',
                                     border: '1px solid rgba(193, 128, 70, 0.2)',
                                 }}
-                                initial={{ opacity: 0, x: 30 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.2, duration: 0.6 }}
                             >
                                 <h1 className="font-baloo font-bold leading-tight">
                                     <span
@@ -349,25 +301,12 @@ export default function HeroInteractive() {
                                         Tu navegador no soporta videos.
                                     </video>
 
-                                    <motion.button
-                                        className="inline-flex items-center gap-2 px-8 py-3 font-nunito font-bold text-lg text-white rounded-full"
+                                    <button
+                                        className="inline-flex items-center gap-2 px-8 py-3 font-nunito font-bold text-lg text-white rounded-full animate-bounce hover:scale-105 active:scale-[0.98] transition-transform"
                                         style={{
                                             backgroundColor: '#FFB559',
                                             boxShadow: '0 8px 24px rgba(255, 181, 89, 0.4)',
                                         }}
-                                        animate={{
-                                            y: [0, -6, 0],
-                                        }}
-                                        transition={{
-                                            duration: 1.2,
-                                            repeat: Infinity,
-                                            ease: "easeInOut",
-                                        }}
-                                        whileHover={{
-                                            scale: 1.05,
-                                            boxShadow: '0 12px 32px rgba(255, 181, 89, 0.5)',
-                                        }}
-                                        whileTap={{ scale: 0.98 }}
                                         onClick={() => router.push('/catalogo')}
                                     >
                                         <svg
@@ -386,21 +325,18 @@ export default function HeroInteractive() {
                                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                                         </svg>
                                         Comprar Ahora
-                                    </motion.button>
+                                    </button>
                                 </div>
-                            </motion.div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ═══════════════════════════════════════════════════════════════
-          MOBILE LAYOUT
-          ═══════════════════════════════════════════════════════════════ */}
+            {/* MOBILE LAYOUT */}
             <div className="block lg:hidden relative z-10">
-                {/* Cards Grid Section (3 columns x 2 rows on mobile) */}
+                {/* Cards Grid Section */}
                 <div className="relative px-3 pt-8 pb-4">
-                    {/* Prominent Section Title - Mobile */}
                     <div className="mb-6">
                         <SectionTitle isMobile />
                     </div>
@@ -465,21 +401,12 @@ export default function HeroInteractive() {
                             </video>
                         </div>
 
-                        <motion.button
-                            className="mt-3 inline-flex items-center gap-2 px-6 py-2.5 font-nunito font-bold text-base text-white rounded-full"
+                        <button
+                            className="mt-3 inline-flex items-center gap-2 px-6 py-2.5 font-nunito font-bold text-base text-white rounded-full animate-bounce active:scale-[0.98] transition-transform"
                             style={{
                                 backgroundColor: '#FFB559',
                                 boxShadow: '0 6px 20px rgba(255, 181, 89, 0.4)',
                             }}
-                            animate={{
-                                y: [0, -5, 0],
-                            }}
-                            transition={{
-                                duration: 1.2,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                            }}
-                            whileTap={{ scale: 0.98 }}
                             onClick={() => router.push('/catalogo')}
                         >
                             <svg
@@ -498,7 +425,7 @@ export default function HeroInteractive() {
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                             </svg>
                             Comprar Ahora
-                        </motion.button>
+                        </button>
                     </div>
                 </div>
             </div>

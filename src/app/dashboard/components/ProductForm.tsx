@@ -40,7 +40,7 @@ const productSchema = z.object({
     howToUse: z.string().optional(),
     routineStep: z.nativeEnum(RoutineStep).optional().nullable(),
     usageTime: z.nativeEnum(UsageTime),
-    isAvailable: z.boolean(),
+    stock: z.number().int().min(0, 'El stock no puede ser negativo'),
     featured: z.boolean(),
 });
 
@@ -117,7 +117,6 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
 
     // Toggle tag selection
     const toggleTag = (tagId: string) => {
-        if (mode === 'edit') return; // No editar tags en modo edit
         setSelectedTagIds(prev =>
             prev.includes(tagId)
                 ? prev.filter(id => id !== tagId)
@@ -147,7 +146,7 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
             howToUse: product?.howToUse || '',
             routineStep: product?.routineStep || null,
             usageTime: product?.usageTime || UsageTime.BOTH,
-            isAvailable: product?.isAvailable ?? true,
+            stock: product?.stock ?? 10,
             featured: product?.featured ?? false,
         }
     });
@@ -316,16 +315,14 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
             // 3. Crear payload - solo incluir tagIds en modo create
             const payload: Record<string, unknown> = {
                 ...data,
+                isAvailable: data.stock > 0,
                 images: allImages,
                 benefits,
                 keyIngredients,
             };
 
-            // Solo en modo create se envían los tags seleccionados
-            // En modo edit NO se envía tagIds para preservar los tags existentes
-            if (mode === 'create') {
-                payload.tagIds = selectedTagIds;
-            }
+            // Always send tagIds (both create and edit)
+            payload.tagIds = selectedTagIds;
 
             // 4. Enviar al API
             const url = mode === 'create'
@@ -448,16 +445,27 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                             </div>
                         </div>
 
-                        <div className="flex gap-4 mt-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    {...register('isAvailable')}
-                                    className="w-5 h-5 rounded-lg border-brand-cream text-pastel-green focus:ring-pastel-green"
-                                />
-                                <span className="font-nunito text-sm text-brand-brown">Disponible</span>
+                        {/* Stock (visible in both create and edit) */}
+                        <div className="mt-4">
+                            <label className="block font-nunito font-semibold text-brand-brown mb-2">
+                                Stock {mode === 'create' ? '(inicial)' : ''}
                             </label>
+                            <input
+                                type="number"
+                                {...register('stock', { valueAsNumber: true })}
+                                placeholder="10"
+                                min={0}
+                                className="w-full px-4 py-3 bg-brand-cream rounded-2xl border-0 font-nunito text-brand-brown focus:ring-2 focus:ring-brand-orange"
+                            />
+                            {errors.stock && (
+                                <p className="text-red-500 text-sm mt-2 font-nunito">{errors.stock.message}</p>
+                            )}
+                            <p className="text-xs text-brand-brown/50 font-nunito mt-1">
+                                La disponibilidad se calcula automáticamente del stock
+                            </p>
+                        </div>
 
+                        <div className="flex gap-4 mt-4">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -646,7 +654,7 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                         <div className="flex items-center gap-2 mb-4">
                             <Tag size={18} className="text-brand-brown" />
                             <label className="font-nunito font-semibold text-brand-brown">
-                                Etiquetas {mode === 'create' ? '*' : '(Solo lectura)'}
+                                Etiquetas *
                             </label>
                         </div>
 
@@ -672,15 +680,14 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                                                             key={tag.id}
                                                             type="button"
                                                             onClick={() => toggleTag(tag.id)}
-                                                            disabled={mode === 'edit'}
+                                                            disabled={false}
                                                             className={`
                                                                 px-3 py-1.5 rounded-full text-sm font-nunito
-                                                                transition-all duration-200
+                                                                transition-all duration-200 cursor-pointer
                                                                 ${isSelected
                                                                     ? `${config.color} ring-2 ring-offset-1 ring-brand-brown/20`
                                                                     : 'bg-brand-cream text-brand-brown/60 hover:bg-brand-cream-dark'
                                                                 }
-                                                                ${mode === 'edit' ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
                                                             `}
                                                         >
                                                             {isSelected && <span className="mr-1">✓</span>}
@@ -695,15 +702,9 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                             </div>
                         )}
 
-                        {mode === 'create' && selectedTagIds.length === 0 && !loadingTags && (
+                        {selectedTagIds.length === 0 && !loadingTags && (
                             <p className="text-xs text-brand-orange mt-3 font-nunito">
                                 ⚠️ Selecciona al menos un tag para categorizar el producto
-                            </p>
-                        )}
-
-                        {mode === 'edit' && (
-                            <p className="text-xs text-brand-brown/50 mt-3 font-nunito">
-                                Los tags no se pueden editar después de crear el producto
                             </p>
                         )}
                     </div>
@@ -715,6 +716,9 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                         </label>
 
                         <div className="flex flex-wrap gap-2 mb-4 min-h-[40px]">
+                            {benefits.length === 0 && (
+                                <p className="font-nunito text-sm text-brand-brown/40 italic py-1">Aún no hay beneficios agregados</p>
+                            )}
                             <AnimatePresence>
                                 {benefits.map((benefit, index) => (
                                     <motion.div
@@ -790,28 +794,32 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                             </AnimatePresence>
                         </div>
 
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={newIngredientKey}
-                                onChange={(e) => setNewIngredientKey(e.target.value)}
-                                placeholder="Ingrediente"
-                                className="flex-1 px-4 py-3 bg-brand-cream rounded-2xl border-0 font-nunito text-brand-brown text-sm placeholder:text-brand-brown/40 focus:ring-2 focus:ring-brand-orange"
-                            />
-                            <input
-                                type="text"
-                                value={newIngredientValue}
-                                onChange={(e) => setNewIngredientValue(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
-                                placeholder="Beneficio"
-                                className="flex-1 px-4 py-3 bg-brand-cream rounded-2xl border-0 font-nunito text-brand-brown text-sm placeholder:text-brand-brown/40 focus:ring-2 focus:ring-brand-orange"
-                            />
+                        <div className="space-y-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input
+                                    type="text"
+                                    value={newIngredientKey}
+                                    onChange={(e) => setNewIngredientKey(e.target.value)}
+                                    placeholder="Ingrediente"
+                                    className="w-full px-4 py-3 bg-brand-cream rounded-2xl border-0 font-nunito text-brand-brown text-sm placeholder:text-brand-brown/40 focus:ring-2 focus:ring-brand-orange"
+                                />
+                                <input
+                                    type="text"
+                                    value={newIngredientValue}
+                                    onChange={(e) => setNewIngredientValue(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
+                                    placeholder="Beneficio"
+                                    className="w-full px-4 py-3 bg-brand-cream rounded-2xl border-0 font-nunito text-brand-brown text-sm placeholder:text-brand-brown/40 focus:ring-2 focus:ring-brand-orange"
+                                />
+                            </div>
                             <button
                                 type="button"
                                 onClick={addIngredient}
-                                className="px-4 py-3 bg-pastel-purple text-purple-800 rounded-2xl hover:bg-purple-200 transition-colors"
+                                disabled={!newIngredientKey.trim() || !newIngredientValue.trim()}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pastel-purple text-purple-800 rounded-2xl hover:bg-purple-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-nunito text-sm font-semibold"
                             >
-                                <Plus size={20} />
+                                <Plus size={16} />
+                                Agregar
                             </button>
                         </div>
                     </div>

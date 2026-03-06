@@ -17,7 +17,7 @@ const tags = [
   { name: 'Piel Sensible', slug: 'piel-sensible', type: TagType.SKIN_TYPE },
   { name: 'Piel Acnéica', slug: 'piel-acneica', type: TagType.SKIN_TYPE },
   { name: 'Todo Tipo de Piel', slug: 'todo-tipo-piel', type: TagType.SKIN_TYPE },
-  
+
   // Preocupaciones
   { name: 'Manchas', slug: 'manchas', type: TagType.CONCERN },
   { name: 'Cicatrices', slug: 'cicatrices', type: TagType.CONCERN },
@@ -28,7 +28,7 @@ const tags = [
   { name: 'Poros', slug: 'poros', type: TagType.CONCERN },
   { name: 'Rojeces', slug: 'rojeces', type: TagType.CONCERN },
   { name: 'Luminosidad', slug: 'luminosidad', type: TagType.CONCERN },
-  
+
   // Categorías de producto
   { name: 'Limpiador', slug: 'limpiador', type: TagType.CATEGORY },
   { name: 'Tónico', slug: 'tonico', type: TagType.CATEGORY },
@@ -48,21 +48,21 @@ const tags = [
 
 const shippingRates = [
   // Lima Local
-  { zone: ShippingZone.LIMA_LOCAL, modality: ShippingModality.DOMICILIO, cost: 10.00, estimatedDays: '24 - 48h' },
-  
+  { zone: ShippingZone.LIMA_LOCAL, modality: ShippingModality.DOMICILIO, cost: 8.00, estimatedDays: '24 - 48h' },
+
   // Lima Provincias
-  { zone: ShippingZone.LIMA_PROVINCIAS, modality: ShippingModality.DOMICILIO, cost: 13.00, estimatedDays: '48 - 72h' },
-  
+  { zone: ShippingZone.LIMA_PROVINCIAS, modality: ShippingModality.DOMICILIO, cost: 12.00, estimatedDays: '48 - 72h' },
+
   // Costa Nacional
-  { zone: ShippingZone.COSTA_NACIONAL, modality: ShippingModality.DOMICILIO, cost: 15.00, estimatedDays: '3 - 5 días' },
-  { zone: ShippingZone.COSTA_NACIONAL, modality: ShippingModality.AGENCIA, cost: 12.00, estimatedDays: '3 - 4 días' },
-  
-  // Sierra y Selva
-  { zone: ShippingZone.SIERRA_SELVA, modality: ShippingModality.DOMICILIO, cost: 20.00, estimatedDays: '3 - 6 días' },
-  { zone: ShippingZone.SIERRA_SELVA, modality: ShippingModality.AGENCIA, cost: 15.00, estimatedDays: '3 - 5 días' },
-  
+  { zone: ShippingZone.COSTA_NACIONAL, modality: ShippingModality.DOMICILIO, cost: 12.00, estimatedDays: '3 - 5 días' },
+  { zone: ShippingZone.COSTA_NACIONAL, modality: ShippingModality.AGENCIA, cost: 10.00, estimatedDays: '3 - 4 días' },
+
+  // Sierra y Selva (Puno, Arequipa, Cusco, etc.)
+  { zone: ShippingZone.SIERRA_SELVA, modality: ShippingModality.DOMICILIO, cost: 15.00, estimatedDays: '3 - 6 días' },
+  { zone: ShippingZone.SIERRA_SELVA, modality: ShippingModality.AGENCIA, cost: 12.00, estimatedDays: '3 - 5 días' },
+
   // Zonas Remotas
-  { zone: ShippingZone.ZONAS_REMOTAS, modality: ShippingModality.DOMICILIO, cost: 25.00, estimatedDays: '5 - 7 días' },
+  { zone: ShippingZone.ZONAS_REMOTAS, modality: ShippingModality.DOMICILIO, cost: 15.00, estimatedDays: '5 - 7 días' },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -90,6 +90,7 @@ const products = [
     },
     isAvailable: true,
     featured: true,
+    stock: 10,
     tagSlugs: ['todo-tipo-piel', 'piel-sensible', 'protector-solar', 'hidratacion']
   },
   {
@@ -109,6 +110,7 @@ const products = [
     },
     isAvailable: true,
     featured: true,
+    stock: 10,
     tagSlugs: ['piel-sensible', 'todo-tipo-piel', 'limpiador', 'kit', 'hidratacion', 'rojeces']
   },
   {
@@ -131,6 +133,7 @@ const products = [
     },
     isAvailable: true,
     featured: false,
+    stock: 10,
     tagSlugs: ['piel-grasa', 'piel-mixta', 'mascarilla', 'poros', 'control-sebo']
   },
   {
@@ -152,6 +155,7 @@ const products = [
     },
     isAvailable: true,
     featured: true,
+    stock: 10,
     tagSlugs: ['todo-tipo-piel', 'ampolla', 'manchas', 'aclarante', 'poros', 'luminosidad']
   },
   {
@@ -170,6 +174,7 @@ const products = [
     },
     isAvailable: true,
     featured: false,
+    stock: 10,
     tagSlugs: ['piel-sensible', 'todo-tipo-piel', 'kit', 'hidratacion', 'rojeces']
   },
   {
@@ -192,6 +197,7 @@ const products = [
     },
     isAvailable: true,
     featured: true,
+    stock: 10,
     tagSlugs: ['piel-sensible', 'piel-seca', 'ampolla', 'hidratacion', 'rojeces', 'luminosidad']
   },
   {
@@ -210,6 +216,7 @@ const products = [
     },
     isAvailable: true,
     featured: true,
+    stock: 10,
     tagSlugs: ['todo-tipo-piel', 'kit', 'manchas', 'aclarante', 'luminosidad']
   },
   {
@@ -230,6 +237,7 @@ const products = [
     },
     isAvailable: true,
     featured: false,
+    stock: 10,
     tagSlugs: ['todo-tipo-piel', 'serum', 'kit', 'manchas', 'aclarante', 'luminosidad']
   },
   {
@@ -250,6 +258,7 @@ const products = [
     },
     isAvailable: true,
     featured: false,
+    stock: 10,
     tagSlugs: ['todo-tipo-piel', 'piel-sensible', 'contorno-ojos', 'anti-edad', 'luminosidad']
   },
   {
@@ -270,6 +279,7 @@ const products = [
     },
     isAvailable: true,
     featured: false,
+    stock: 10,
     tagSlugs: ['piel-acneica', 'piel-grasa', 'limpiador', 'poros', 'control-sebo']
   },
   {
@@ -291,6 +301,7 @@ const products = [
     },
     isAvailable: true,
     featured: false,
+    stock: 10,
     tagSlugs: ['piel-acneica', 'piel-sensible', 'crema', 'cicatrices', 'manchas', 'hidratacion']
   },
   {
@@ -311,6 +322,7 @@ const products = [
     },
     isAvailable: true,
     featured: true,
+    stock: 10,
     tagSlugs: ['todo-tipo-piel', 'tone-up', 'aclarante', 'luminosidad']
   }
 ];
@@ -335,7 +347,7 @@ async function main() {
   // 1. Crear Tags
   console.log('📌 Creating tags...');
   const createdTags = await Promise.all(
-    tags.map(tag => 
+    tags.map(tag =>
       prisma.tag.upsert({
         where: { slug: tag.slug },
         update: {},
@@ -365,7 +377,7 @@ async function main() {
   console.log('🧴 Creating products...');
   for (const product of products) {
     const { tagSlugs, ...productData } = product;
-    
+
     // Verificar si el producto ya existe
     const existing = await prisma.product.findFirst({
       where: { name: product.name }

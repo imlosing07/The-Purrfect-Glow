@@ -13,14 +13,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const order = await getOrderById(id);
-    
+
     if (!order) {
       return NextResponse.json(
         { error: 'Order not found' },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(order);
   } catch (error) {
     console.error('Error in GET /api/orders/[id]:', error);
@@ -35,19 +35,19 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await request.json();
-    
+
     // Validar que el status sea válido
-    const validStatuses: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.SHIPPED, OrderStatus.DELIVERED];
-    
+    const validStatuses: OrderStatus[] = [OrderStatus.PENDING_PAYMENT, OrderStatus.PAID, OrderStatus.SHIPPED];
+
     if (!body.status || !validStatuses.includes(body.status)) {
       return NextResponse.json(
-        { error: 'Invalid status. Must be one of: PENDING, SHIPPED, DELIVERED' },
+        { error: 'Invalid status. Must be one of: PENDING_PAYMENT, PAID, SHIPPED' },
         { status: 400 }
       );
     }
-    
+
     const order = await updateOrderStatus(id, body.status);
-    
+
     return NextResponse.json(order);
   } catch (error) {
     console.error('Error in PATCH /api/orders/[id]:', error);
