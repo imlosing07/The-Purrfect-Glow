@@ -139,7 +139,7 @@ export default function ProductCard({
                 {/* Product Name */}
                 <h3
                     className={`
-            font-nunito font-semibold text-brand-brown line-clamp-2 
+            font-nunito font-semibold text-brand-brown line-clamp-2 break-words
             group-hover:text-brand-orange transition-colors
             ${variant === 'compact' ? 'text-sm h-[2.5rem]' : 'text-base h-[3rem]'}
           `}
