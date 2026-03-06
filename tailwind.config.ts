@@ -99,12 +99,22 @@ const config: Config = {
         '0%, 100%': { transform: 'translateY(0)' },
         '50%': { transform: 'translateY(-5px)' },
       },
+      'gradient-x': {
+        '0%, 100%': { 'background-position': 'left center' },
+        '50%': { 'background-position': 'right center' },
+      },
+      marquee: {
+        '0%': { transform: 'translateX(-100%)' },
+        '100%': { transform: 'translateX(300%)' },
+      },
     },
     animation: {
       'shimmer': 'shimmer 2s infinite',
       'slide-in': 'slide-in 0.3s ease-out',
       'slide-out': 'slide-out 0.3s ease-in',
       'bounce-soft': 'bounce-soft 1s ease-in-out infinite',
+      'gradient-x': 'gradient-x 3s ease infinite',
+      'marquee': 'marquee 3s linear infinite',
     },
   },
   plugins: [require('@tailwindcss/forms')],

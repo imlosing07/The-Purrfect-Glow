@@ -25,7 +25,7 @@ export default function FloatingSocialButtons() {
     const whatsappLink = `https://api.whatsapp.com/send?phone=${WHATSAPP_PHONE}&text=${encodeURIComponent('¡Hola! 🌸 Me gustaría hacer una consulta sobre sus productos de skincare.')}`;
 
     return (
-        <div className="fixed bottom-20 lg:bottom-6 right-4 z-40 flex flex-col items-end gap-3">
+        <div className="fixed bottom-52 lg:bottom-6 right-4 z-40 flex flex-col items-end gap-3">
             {/* Expanded buttons */}
             <div className={`flex flex-col items-end gap-3 transition-all duration-300 ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
                 {/* Instagram Button */}
