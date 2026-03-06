@@ -12,7 +12,7 @@ export default function PedidosPage() {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
     const [updatingId, setUpdatingId] = useState<string | null>(null);
-    const [stats, setStats] = useState({ PENDING: 0, SHIPPED: 0, DELIVERED: 0 });
+    const [stats, setStats] = useState({ PENDING_PAYMENT: 0, PAID: 0, SHIPPED: 0 });
     const { showToast } = useToast();
 
     // Fetch orders
@@ -70,9 +70,9 @@ export default function PedidosPage() {
             }
 
             const statusMessages: Record<OrderStatus, string> = {
-                [OrderStatus.PENDING]: '¡Pedido marcado como pendiente! ⏳',
-                [OrderStatus.SHIPPED]: '¡Pedido enviado! 📦✨',
-                [OrderStatus.DELIVERED]: '¡Pedido entregado! 🎉',
+                [OrderStatus.PENDING_PAYMENT]: '¡Pedido marcado como pendiente! ⏳',
+                [OrderStatus.PAID]: '¡Pedido marcado como pagado! 💳',
+                [OrderStatus.SHIPPED]: '¡Pedido enviado y stock descontado! 📦✨',
             };
 
             showToast(statusMessages[newStatus]);
@@ -91,9 +91,9 @@ export default function PedidosPage() {
 
     const statusTabs: { key: OrderStatus | 'ALL'; label: string; icon: string; color: string }[] = [
         { key: 'ALL', label: 'Todos', icon: '📋', color: 'bg-white' },
-        { key: OrderStatus.PENDING, label: 'Pendientes', icon: '⏳', color: 'bg-status-pending' },
+        { key: OrderStatus.PENDING_PAYMENT, label: 'Pendientes', icon: '⏳', color: 'bg-status-pending' },
+        { key: OrderStatus.PAID, label: 'Pagados', icon: '💳', color: 'bg-emerald-100' },
         { key: OrderStatus.SHIPPED, label: 'Enviados', icon: '📦', color: 'bg-status-shipped' },
-        { key: OrderStatus.DELIVERED, label: 'Entregados', icon: '✅', color: 'bg-status-delivered' },
     ];
 
     return (
@@ -113,8 +113,16 @@ export default function PedidosPage() {
                 <div className="bg-status-pending rounded-3xl p-4 shadow-soft">
                     <div className="text-center">
                         <span className="text-2xl">⏳</span>
-                        <p className="font-baloo font-bold text-2xl text-brand-brown mt-1">{stats.PENDING}</p>
+                        <p className="font-baloo font-bold text-2xl text-brand-brown mt-1">{stats.PENDING_PAYMENT}</p>
                         <p className="text-xs font-nunito text-brand-brown/70">Pendientes</p>
+                    </div>
+                </div>
+
+                <div className="bg-emerald-100 rounded-3xl p-4 shadow-soft">
+                    <div className="text-center">
+                        <span className="text-2xl">💳</span>
+                        <p className="font-baloo font-bold text-2xl text-emerald-800 mt-1">{stats.PAID}</p>
+                        <p className="text-xs font-nunito text-emerald-800/70">Pagados</p>
                     </div>
                 </div>
 
@@ -123,14 +131,6 @@ export default function PedidosPage() {
                         <span className="text-2xl">📦</span>
                         <p className="font-baloo font-bold text-2xl text-blue-800 mt-1">{stats.SHIPPED}</p>
                         <p className="text-xs font-nunito text-blue-800/70">Enviados</p>
-                    </div>
-                </div>
-
-                <div className="bg-status-delivered rounded-3xl p-4 shadow-soft">
-                    <div className="text-center">
-                        <span className="text-2xl">✅</span>
-                        <p className="font-baloo font-bold text-2xl text-green-800 mt-1">{stats.DELIVERED}</p>
-                        <p className="text-xs font-nunito text-green-800/70">Entregados</p>
                     </div>
                 </div>
             </div>

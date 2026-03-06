@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import FavoriteButton from '@/src/app/(landing-page)/components/FavoriteButton';
 
 // Tag color mapping based on TagType
 const getTagColors = (type: TagType): string => {
@@ -34,7 +36,10 @@ export default function ProductCard({
 }: ProductCardProps) {
     const { addToCart } = useCart();
     const router = useRouter();
+    const { data: session } = useSession();
     const [isAdding, setIsAdding] = useState(false);
+
+    const isOutOfStock = product.stock === 0 || !product.isAvailable;
 
     // Get the first image or placeholder
     const mainImage = product.images?.[0] || null;
@@ -46,22 +51,30 @@ export default function ProductCard({
         e.preventDefault();
         e.stopPropagation();
 
+        // Auth check
+        if (!session?.user) {
+            router.push('/login');
+            return;
+        }
+
+        // Stock check
+        if (isOutOfStock) return;
+
         setIsAdding(true);
 
         addToCart({
             productId: product.id,
             productName: product.name,
             productImage: mainImage || '',
-            brandName: '', // No brand in current schema
-            size: 'Único', // Default size
+            brandName: '',
+            size: 'Único',
             price: product.price,
         });
 
-        // Brief visual feedback then navigate to cart
+        // Reset the button after a short delay
         setTimeout(() => {
             setIsAdding(false);
-            router.push('/carrito');
-        }, 400);
+        }, 1500);
     };
 
     const cardContent = (
@@ -88,6 +101,18 @@ export default function ProductCard({
                         height={64}
                         className="w-full h-full object-contain opacity-90"
                     />
+                </div>
+
+                {/* Out of Stock Badge */}
+                {isOutOfStock && (
+                    <div className="absolute top-2 left-2 z-10 bg-gray-500/90 text-white px-3 py-1 rounded-full font-nunito font-semibold text-xs">
+                        Agotado
+                    </div>
+                )}
+
+                {/* Favorite Button - Floating */}
+                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <FavoriteButton productId={product.id} variant="floating" />
                 </div>
 
                 {mainImage ? (
@@ -148,17 +173,19 @@ export default function ProductCard({
                 {showAddToCart && (
                     <button
                         onClick={handleAddToCart}
-                        disabled={isAdding}
+                        disabled={isAdding || isOutOfStock}
                         className={`
               w-full py-2 rounded-xl font-nunito font-semibold text-sm
               transition-all duration-300 transform
-              ${isAdding
-                                ? 'bg-pastel-green text-brand-brown scale-95'
-                                : 'bg-brand-cream text-brand-brown hover:bg-brand-orange hover:text-white hover:shadow-glow'
+              ${isOutOfStock
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                : isAdding
+                                    ? 'bg-pastel-green text-brand-brown scale-95'
+                                    : 'bg-brand-cream text-brand-brown hover:bg-brand-orange hover:text-white hover:shadow-glow'
                             }
             `}
                     >
-                        {isAdding ? '¡Agregado! ✓' : 'Agregar al Carrito'}
+                        {isOutOfStock ? 'Agotado' : isAdding ? '¡Agregado! ✓' : 'Agregar al Carrito'}
                     </button>
                 )}
             </div>

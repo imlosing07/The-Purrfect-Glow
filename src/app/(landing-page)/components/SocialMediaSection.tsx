@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import Image from 'next/image';
 
 // Real social media posts from the user
 const instagramPosts = [
@@ -40,13 +39,7 @@ export default function SocialMediaSection() {
             {/* Background gradient */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-pastel-purple/10 to-transparent pointer-events-none" />
 
-            {/* Decorative elements */}
-            <div className="absolute top-10 left-5 opacity-15 pointer-events-none hidden md:block">
-                <Image src="/Elementos/Vector-49.png" alt="" width={60} height={60} />
-            </div>
-            <div className="absolute bottom-10 right-5 opacity-15 pointer-events-none hidden md:block">
-                <Image src="/Elementos/Vector-50.png" alt="" width={60} height={60} />
-            </div>
+
 
             {/* Section Header */}
             <div className="text-center mb-10">

@@ -3,11 +3,10 @@
 import { Product, RoutineStep, ROUTINE_STEP_INFO } from "@/src/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { ArrowLeft, Sun, Moon, ShoppingCart, Heart, Check } from "lucide-react";
 import { useCart } from "@/src/app/lib/contexts/CartContext";
 import { useWishlist } from "@/src/app/lib/contexts/WishlistContext";
-import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 // Colores pastel para ingredientes (rotan)
 const INGREDIENT_COLORS = [
@@ -26,20 +25,7 @@ const ROUTINE_STEPS = [
   { step: 6, key: 'SUNSCREEN', name: "Protector", icon: "☀️" },
 ];
 
-// Animaciones de Framer Motion
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 },
-};
 
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
 
 export default function ProductDetailClient({ product }: { product: Product }) {
   const router = useRouter();
@@ -48,8 +34,10 @@ export default function ProductDetailClient({ product }: { product: Product }) {
   const [showFavoriteMessage, setShowFavoriteMessage] = useState(false);
   const { addToCart } = useCart();
   const { toggleFavorite, isInWishlist } = useWishlist();
+  const { data: session } = useSession();
 
   const isProductInWishlist = isInWishlist(product.id);
+  const isOutOfStock = product.stock === 0 || !product.isAvailable;
 
   // Verificar si es un producto de cuidado especial
   const isSpecialCare = product.routineStep === RoutineStep.SPECIAL_CARE;
@@ -72,18 +60,15 @@ export default function ProductDetailClient({ product }: { product: Product }) {
     return `Paso ${stepInfo.step}: ${stepInfo.label}`;
   };
 
-  // Generar link de WhatsApp
-  const generateWhatsAppLink = () => {
-    const phone = "51987654321"; // Reemplazar con número real
-    const message = encodeURIComponent(
-      `¡Hola Solicorn! 🌟 Me encantaría brillar con el ${product.name}. ¿Está disponible?`
-    );
-    return `https://wa.me/${phone}?text=${message}`;
-  };
-
   // Agregar al carrito
   const handleAddToCart = () => {
-    if (!product.isAvailable) return;
+    // Auth check
+    if (!session?.user) {
+      router.push('/login');
+      return;
+    }
+
+    if (isOutOfStock) return;
 
     addToCart({
       productId: product.id,
@@ -96,11 +81,14 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
     setShowAddedMessage(true);
     setTimeout(() => setShowAddedMessage(false), 3000);
-    router.push('/carrito');
   };
 
   // Agregar/quitar de favoritos
   const handleToggleFavorite = async () => {
+    if (!session?.user) {
+      router.push('/login');
+      return;
+    }
     const newState = await toggleFavorite(product.id);
     if (newState && !isProductInWishlist) {
       setShowFavoriteMessage(true);
@@ -145,35 +133,22 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
   return (
     <div className="min-h-screen bg-brand-cream pb-32 md:pb-16">
-      {/* Decorative elements */}
-      <div className="fixed top-20 right-4 opacity-20 pointer-events-none hidden md:block">
-        <Image src="/Elementos/Vector-49.png" alt="" width={80} height={80} />
-      </div>
-      <div className="fixed bottom-40 left-4 opacity-20 pointer-events-none hidden md:block">
-        <Image src="/Elementos/Vector-51.png" alt="" width={60} height={60} />
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         {/* Back Button */}
-        <motion.button
+        <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-brand-brown hover:text-brand-brown-dark transition font-medium mb-6"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
         >
           <ArrowLeft className="w-5 h-5" />
           Volver
-        </motion.button>
+        </button>
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* LEFT COLUMN - Images (Sticky on Desktop) */}
           {/* ═══════════════════════════════════════════════════════════════ */}
-          <motion.div
+          <div
             className="lg:sticky lg:top-24 lg:self-start space-y-4"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
           >
             {/* Main Image */}
             <div className="relative bg-white rounded-3xl shadow-soft-md overflow-hidden aspect-square">
@@ -190,7 +165,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               )}
 
               {/* Unavailable Badge */}
-              {!product.isAvailable && (
+              {isOutOfStock && (
                 <div className="absolute top-4 left-4 bg-gray-500 text-white px-4 py-2 rounded-full font-baloo font-semibold text-sm">
                   Agotado
                 </div>
@@ -203,10 +178,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                 </div>
               )}
 
-              {/* Decorative star */}
-              <div className="absolute bottom-4 right-4 opacity-30">
-                <Image src="/Elementos/Vector-1.png" alt="" width={40} height={40} />
-              </div>
+
             </div>
 
             {/* Thumbnail Gallery - Washi Tape Style */}
@@ -235,19 +207,14 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                 ))}
               </div>
             )}
-          </motion.div>
+          </div>
 
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* RIGHT COLUMN - Product Info */}
           {/* ═══════════════════════════════════════════════════════════════ */}
-          <motion.div
-            className="space-y-6"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-          >
+          <div className="space-y-6">
             {/* Hero Info */}
-            <motion.div variants={fadeInUp} className="space-y-3">
+            <div className="space-y-3">
               {/* Routine Step Badge */}
               {product.routineStep && (
                 <div className="inline-flex items-center gap-2 bg-pastel-blue/30 text-brand-brown px-3 py-1.5 rounded-full text-sm font-medium">
@@ -272,27 +239,23 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                   </span>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Summary */}
             {product.summary && (
-              <motion.div variants={fadeInUp}>
+              <div>
                 <p className="text-brand-brown/80 font-nunito leading-relaxed">
                   {product.summary}
                 </p>
-              </motion.div>
+              </div>
             )}
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* TIP DE SOLICORN - For SPECIAL_CARE products */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             {isSpecialCare && (
-              <motion.div variants={fadeInUp} className="py-4">
-                <div className="bg-gradient-to-r from-pastel-pink/40 to-pastel-purple/40 p-5 rounded-3xl border-2 border-dashed border-brand-orange/30 relative overflow-hidden">
-                  {/* Decorative cat */}
-                  <div className="absolute -right-2 -top-2 opacity-60">
-                    <Image src="/Elementos/Group 1697.png" alt="" width={50} height={50} />
-                  </div>
+              <div className="py-4">
+                <div className="bg-gradient-to-r from-pastel-pink/40 to-pastel-purple/40 p-5 rounded-3xl border-2 border-dashed border-brand-orange/30">
 
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">💕</span>
@@ -307,14 +270,14 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* ROUTINE TIMELINE - For regular steps 1-6 */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             {currentStep > 0 && !isSpecialCare && (
-              <motion.div variants={fadeInUp} className="py-4">
+              <div className="py-4">
                 <h3 className="font-baloo text-lg font-semibold text-brand-brown mb-4 flex items-center gap-2">
                   <span>📋</span> Tu Rutina de Skincare
                 </h3>
@@ -348,30 +311,24 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                         >
                           {step.name}
                         </span>
-                        {/* Cat peeking at current step */}
+                        {/* Current step indicator */}
                         {step.step === currentStep && (
-                          <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                            <Image
-                              src="/Elementos/Group 1697.png"
-                              alt="Gatito"
-                              width={32}
-                              height={32}
-                              className="animate-bounce"
-                            />
+                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-lg animate-bounce">
+                            🐱
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* BENEFITS */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             {product.benefits && product.benefits.length > 0 && (
-              <motion.div variants={fadeInUp} className="py-4">
+              <div className="py-4">
                 <h3 className="font-baloo text-lg font-semibold text-brand-brown mb-4 flex items-center gap-2">
                   <span>✨</span> Beneficios Clave
                 </h3>
@@ -383,14 +340,14 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </div>
             )}
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* KEY INGREDIENTS - Infographic Style */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             {product.keyIngredients && Object.keys(product.keyIngredients).length > 0 && (
-              <motion.div variants={fadeInUp} className="py-4">
+              <div className="py-4">
                 <h3 className="font-baloo text-lg font-semibold text-brand-brown mb-4 flex items-center gap-2">
                   <span>🧪</span> Ingredientes Estrella
                 </h3>
@@ -410,31 +367,27 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* HOW TO USE */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             {product.howToUse && (
-              <motion.div variants={fadeInUp} className="py-4">
+              <div className="py-4">
                 <h3 className="font-baloo text-lg font-semibold text-brand-brown mb-4 flex items-center gap-2">
                   <span>📖</span> Modo de Uso
                 </h3>
-                <div className="bg-white p-5 rounded-2xl shadow-soft relative overflow-hidden">
+                <div className="bg-white p-5 rounded-2xl shadow-soft">
                   <p className="text-brand-brown/80 font-nunito leading-relaxed">
                     {product.howToUse}
                   </p>
-                  {/* Decorative corner */}
-                  <div className="absolute -bottom-2 -right-2 opacity-20">
-                    <Image src="/Elementos/Vector-5.png" alt="" width={50} height={50} />
-                  </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* Removed inline desktop CTA - now using floating bar below */}
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -458,7 +411,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
             </div>
           )}
 
-          {product.isAvailable ? (
+          {!isOutOfStock ? (
             <>
               <button
                 onClick={handleAddToCart}
@@ -471,8 +424,8 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               <button
                 onClick={handleToggleFavorite}
                 className={`px-4 py-3 rounded-xl font-baloo font-semibold transition flex items-center justify-center ${isProductInWishlist
-                    ? "bg-pastel-pink text-brand-brown"
-                    : "bg-white border-2 border-brand-cream-dark text-brand-brown hover:bg-brand-cream"
+                  ? "bg-pastel-pink text-brand-brown"
+                  : "bg-white border-2 border-brand-cream-dark text-brand-brown hover:bg-brand-cream"
                   }`}
               >
                 <Heart className={`w-5 h-5 ${isProductInWishlist ? "fill-current" : ""}`} />
@@ -484,8 +437,8 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               <button
                 onClick={handleToggleFavorite}
                 className={`px-6 py-3 rounded-xl font-baloo font-semibold transition flex items-center gap-2 ${isProductInWishlist
-                    ? "bg-pastel-pink text-brand-brown"
-                    : "bg-brand-orange text-white hover:bg-brand-orange/90"
+                  ? "bg-pastel-pink text-brand-brown"
+                  : "bg-brand-orange text-white hover:bg-brand-orange/90"
                   }`}
               >
                 <Heart className={`w-5 h-5 ${isProductInWishlist ? "fill-current" : ""}`} />
@@ -515,7 +468,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           </div>
         )}
 
-        {product.isAvailable ? (
+        {!isOutOfStock ? (
           <div className="flex gap-3">
             <button
               onClick={handleAddToCart}

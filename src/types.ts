@@ -108,6 +108,7 @@ export interface Product {
   usageTime: UsageTime;
   keyIngredients?: Record<string, string> | null;
   isAvailable: boolean;
+  stock: number;
   featured: boolean;
   tags: Tag[];
   createdAt: Date;
@@ -128,6 +129,7 @@ export interface CreateProductDTO {
   routineStep?: RoutineStep | null;
   usageTime?: UsageTime;
   keyIngredients?: Record<string, string>;
+  stock?: number;
   isAvailable?: boolean;
   featured?: boolean;
   tagIds: string[];
@@ -143,6 +145,7 @@ export interface UpdateProductDTO {
   routineStep?: RoutineStep | null;
   usageTime?: UsageTime;
   keyIngredients?: Record<string, string>;
+  stock?: number;
   isAvailable?: boolean;
   featured?: boolean;
   tagIds?: string[];
@@ -228,6 +231,7 @@ export interface Order {
   totalAmount: number;
   status: OrderStatus;
   whatsappLink?: string | null;
+  locationUrl?: string | null;
   items: OrderItem[];
   createdAt: Date;
   updatedAt: Date;
@@ -242,6 +246,7 @@ export interface CreateOrderDTO {
   province: string;
   shippingZone: ShippingZone;
   shippingModality: ShippingModality;
+  locationUrl?: string;
   items: {
     productId: string;
     quantity: number;
@@ -271,23 +276,6 @@ export interface Cart {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// WHATSAPP UTILITY TYPES
-// ═══════════════════════════════════════════════════════════════
-
-export interface WhatsAppOrderData {
-  orderNumber: string;
-  customerName: string;
-  dni: string;
-  phone: string;
-  items: { name: string; quantity: number; price: number }[];
-  shippingZone: ShippingZone;
-  shippingModality: ShippingModality;
-  shippingCost: number;
-  estimatedDays: string;
-  totalAmount: number;
-}
-
-// ═══════════════════════════════════════════════════════════════
 // USER (Auth - se mantiene)
 // ═══════════════════════════════════════════════════════════════
 
@@ -303,4 +291,5 @@ export interface User {
   emailVerified: Date | null;
   image: string | null;
   role: UserRole;
+  purrPoints?: number;
 }

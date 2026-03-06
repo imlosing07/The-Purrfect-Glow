@@ -2,11 +2,10 @@
 
 import { useWishlist } from '@/src/app/lib/contexts/WishlistContext';
 import { useCart } from '@/src/app/lib/contexts/CartContext';
-import { useMemo, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Product } from "@/src/types";
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { getUserWishlist } from '@/src/actions/wishlist';
 
@@ -23,15 +22,8 @@ function FavoriteCard({
   const mainImage = product.images?.[0] || null;
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="relative bg-white rounded-3xl overflow-hidden shadow-soft p-3 group"
-    >
-      {/* Delete Button - Paw shaped bubble */}
+    <div className="relative bg-white rounded-3xl overflow-hidden shadow-soft p-3 group">
+      {/* Delete Button */}
       <button
         onClick={(e) => {
           e.preventDefault();
@@ -43,11 +35,6 @@ function FavoriteCard({
       >
         <X className="w-4 h-4 text-brand-brown" />
       </button>
-
-      {/* Decorative Paw */}
-      <div className="absolute -bottom-1 -right-1 w-8 h-8 z-10 pointer-events-none opacity-60">
-        <Image src="/cat-paw.png" alt="" width={32} height={32} />
-      </div>
 
       <Link href={`/producto/${product.id}`} className="block">
         {/* Product Image */}
@@ -75,7 +62,7 @@ function FavoriteCard({
           S/ {product.price.toFixed(2)}
         </p>
       </Link>
-    </motion.div>
+    </div>
   );
 }
 
@@ -95,16 +82,10 @@ function SelectionSummary({
 }) {
   return (
     <div className="bg-white rounded-[40px] shadow-soft p-6 space-y-5">
-      {/* Cat with cart illustration */}
+      {/* Cat illustration */}
       <div className="flex justify-center">
         <div className="relative">
-          <Image
-            src="/Elementos/Group 1697.png"
-            alt="Gatito con carrito"
-            width={80}
-            height={80}
-            className="drop-shadow-sm"
-          />
+          <span className="text-5xl">🐱</span>
           <div className="absolute -right-2 -bottom-1">
             <ShoppingCart className="w-6 h-6 text-brand-orange" />
           </div>
@@ -142,12 +123,7 @@ function SelectionSummary({
         >
           {isMoving ? (
             <>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-              >
-                <ShoppingCart className="w-5 h-5" />
-              </motion.div>
+              <ShoppingCart className="w-5 h-5 animate-spin" />
               Moviendo...
             </>
           ) : (
@@ -175,27 +151,9 @@ function SelectionSummary({
 // ═══════════════════════════════════════════════════════════════
 function EmptyState() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center py-16 px-4 text-center"
-    >
-      {/* Cat searching illustration */}
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
       <div className="relative mb-6">
-        <Image
-          src="/Elementos/Group 1703.png"
-          alt="Gatito buscando"
-          width={150}
-          height={150}
-          className="drop-shadow-md"
-        />
-        <motion.div
-          animate={{ y: [0, -5, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute -top-2 -right-2"
-        >
-          <span className="text-2xl">💭</span>
-        </motion.div>
+        <span className="text-6xl">😿</span>
       </div>
 
       <h2 className="font-baloo font-bold text-2xl text-brand-brown mb-2">
@@ -213,7 +171,7 @@ function EmptyState() {
         <span>🛍️</span>
         Explorar Catálogo
       </Link>
-    </motion.div>
+    </div>
   );
 }
 
@@ -228,7 +186,6 @@ export default function FavoritesPage() {
   const { wishlistIds, toggleFavorite, isAuthenticated } = useWishlist();
   const { addToCart } = useCart();
 
-  // In your FavoritesPage component, replace the useEffect with:
   useEffect(() => {
     async function fetchFavorites() {
       try {
@@ -250,24 +207,19 @@ export default function FavoritesPage() {
     }
   }, [isAuthenticated]);
 
-  // And remove the filtering since products are already favorites:
   const favoriteProducts = products;
-
   const isEmpty = favoriteProducts.length === 0;
   const totalPrice = favoriteProducts.reduce((sum, p) => sum + p.price, 0);
 
-  // Handle remove product from favorites
   const handleRemove = async (productId: string) => {
     await toggleFavorite(productId);
   };
 
-  // Handle move all to cart
   const handleMoveAllToCart = async () => {
     if (favoriteProducts.length === 0) return;
 
     setIsMoving(true);
 
-    // Add each product to cart
     for (const product of favoriteProducts) {
       addToCart({
         productId: product.id,
@@ -279,7 +231,6 @@ export default function FavoritesPage() {
       });
     }
 
-    // Show success feedback
     setShowSuccess(true);
     setTimeout(() => {
       setIsMoving(false);
@@ -290,35 +241,17 @@ export default function FavoritesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FFF6E6] flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-          className="text-4xl"
-        >
-          🐱
-        </motion.div>
+        <div className="text-4xl animate-spin">🐱</div>
       </div>
     );
   }
 
-  // Show login prompt if not authenticated
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#FFF6E6] flex items-center justify-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[40px] shadow-soft-lg p-8 max-w-md w-full text-center"
-        >
-          {/* Cat Mascot */}
+        <div className="bg-white rounded-[40px] shadow-soft-lg p-8 max-w-md w-full text-center">
           <div className="flex justify-center mb-4">
-            <Image
-              src="/Elementos/Group 1697.png"
-              alt="Purrfect Glow Mascot"
-              width={100}
-              height={100}
-              className="drop-shadow-lg"
-            />
+            <span className="text-6xl">🐱</span>
           </div>
 
           <h1 className="font-baloo font-bold text-2xl text-brand-brown mb-2">
@@ -328,7 +261,6 @@ export default function FavoritesPage() {
             Inicia sesión para guardar tus productos favoritos y acceder a beneficios exclusivos del Club Purrfect Glow ✨
           </p>
 
-          {/* Benefits preview */}
           <div className="bg-brand-cream/50 rounded-2xl p-4 mb-6 text-left">
             <p className="font-nunito font-semibold text-brand-brown text-xs uppercase tracking-wide mb-2">
               Beneficios de unirte
@@ -363,59 +295,18 @@ export default function FavoritesPage() {
           >
             Continuar explorando →
           </Link>
-        </motion.div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#FFF6E6] pb-32 lg:pb-8">
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* DECORATIVE HEADER */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* HEADER */}
       <div className="relative overflow-hidden bg-gradient-to-b from-[#FFECD2] to-[#FFF6E6] py-8 lg:py-12">
-        {/* Decorative elements - Clouds */}
-        <div className="absolute top-4 left-8 opacity-40">
-          <Image src="/Elementos/Vector-49.png" alt="" width={60} height={40} />
-        </div>
-        <div className="absolute top-6 right-12 opacity-30">
-          <Image src="/Elementos/Vector-50.png" alt="" width={50} height={35} />
-        </div>
-
-        {/* Decorative elements - Stars */}
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute top-8 left-1/4 text-pastel-purple"
-        >
-          ✦
-        </motion.div>
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ repeat: Infinity, duration: 2, delay: 0.5 }}
-          className="absolute top-12 right-1/4 text-pastel-pink"
-        >
-          ✦
-        </motion.div>
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ repeat: Infinity, duration: 2, delay: 1 }}
-          className="absolute bottom-4 left-1/3 text-pastel-blue"
-        >
-          ★
-        </motion.div>
-
-        {/* Header Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
-          {/* Cat with heart eyes */}
           <div className="flex justify-center mb-3">
-            <Image
-              src="/Elementos/Group 1697.png"
-              alt="Gatito con corazones"
-              width={80}
-              height={80}
-              className="drop-shadow-md"
-            />
+            <span className="text-5xl">😻</span>
           </div>
 
           <h1
@@ -432,33 +323,26 @@ export default function FavoritesPage() {
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════ */}
       {/* MAIN CONTENT */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         {isEmpty ? (
           <EmptyState />
         ) : (
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Product Grid - Main Column (70%) */}
+            {/* Product Grid */}
             <div className="flex-1 lg:w-[70%]">
-              <motion.div
-                layout
-                className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4"
-              >
-                <AnimatePresence mode="popLayout">
-                  {favoriteProducts.map((product) => (
-                    <FavoriteCard
-                      key={product.id}
-                      product={product}
-                      onRemove={() => handleRemove(product.id)}
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                {favoriteProducts.map((product) => (
+                  <FavoriteCard
+                    key={product.id}
+                    product={product}
+                    onRemove={() => handleRemove(product.id)}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Selection Summary - Sidebar (30%) - Desktop Only */}
+            {/* Desktop Sidebar */}
             <div className="hidden lg:block w-[30%] lg:max-w-xs">
               <div className="sticky top-24">
                 <SelectionSummary
@@ -473,25 +357,15 @@ export default function FavoritesPage() {
         )}
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* MOBILE STICKY BOTTOM BAR */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* MOBILE BOTTOM BAR */}
       {!isEmpty && (
         <div className="lg:hidden fixed bottom-20 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-brand-cream-dark p-4 z-50 shadow-lg">
-          {/* Success Message */}
-          <AnimatePresence>
-            {showSuccess && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute -top-14 left-4 right-4 bg-pastel-green border border-green-200 rounded-xl p-3 flex items-center gap-2 shadow-lg"
-              >
-                <span>✓</span>
-                <p className="text-brand-brown font-medium text-sm">¡Todos agregados al carrito! 🎉</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {showSuccess && (
+            <div className="absolute -top-14 left-4 right-4 bg-pastel-green border border-green-200 rounded-xl p-3 flex items-center gap-2 shadow-lg">
+              <span>✓</span>
+              <p className="text-brand-brown font-medium text-sm">¡Todos agregados al carrito! 🎉</p>
+            </div>
+          )}
 
           <div className="flex items-center justify-between gap-4">
             <div>

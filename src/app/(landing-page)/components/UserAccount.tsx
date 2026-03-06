@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, User, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
 
@@ -81,47 +80,51 @@ export default function UserAccount({
                 </button>
 
                 {/* Mobile Dropdown Menu */}
-                <AnimatePresence>
-                    {showUserMenu && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-soft-lg border border-brand-cream-dark overflow-hidden z-50"
-                        >
-                            <div className="p-2">
-                                {isAdmin ? (
-                                    <Link
-                                        href="/dashboard"
-                                        onClick={() => setShowUserMenu(false)}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
-                                    >
-                                        <LayoutDashboard size={18} className="text-pastel-purple" />
-                                        <span className="font-nunito text-sm text-brand-brown">Dashboard</span>
-                                    </Link>
-                                ) : (
-                                    <Link
-                                        href="/favoritos"
-                                        onClick={() => setShowUserMenu(false)}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
-                                    >
-                                        <Heart size={18} className="text-pastel-purple" />
-                                        <span className="font-nunito text-sm text-brand-brown">Mis Favoritos</span>
-                                    </Link>
-                                )}
-
-                                <button
-                                    onClick={handleSignOut}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
+                {showUserMenu && (
+                    <div
+                        className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-soft-lg border border-brand-cream-dark overflow-hidden z-50"
+                    >
+                        <div className="p-2">
+                            {isAdmin ? (
+                                <Link
+                                    href="/dashboard"
+                                    onClick={() => setShowUserMenu(false)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
                                 >
-                                    <LogOut size={18} className="text-red-400" />
-                                    <span className="font-nunito text-sm text-brand-brown">Cerrar sesión</span>
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                    <LayoutDashboard size={18} className="text-pastel-purple" />
+                                    <span className="font-nunito text-sm text-brand-brown">Dashboard</span>
+                                </Link>
+                            ) : (
+                                <Link
+                                    href="/favoritos"
+                                    onClick={() => setShowUserMenu(false)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
+                                >
+                                    <Heart size={18} className="text-pastel-purple" />
+                                    <span className="font-nunito text-sm text-brand-brown">Mis Favoritos</span>
+                                </Link>
+                            )}
+
+                            {/* Profile Link - Always visible for authenticated users */}
+                            <Link
+                                href="/perfil"
+                                onClick={() => setShowUserMenu(false)}
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-blue/20 transition-colors"
+                            >
+                                <User size={18} className="text-pastel-blue" />
+                                <span className="font-nunito text-sm text-brand-brown">Mi Perfil</span>
+                            </Link>
+
+                            <button
+                                onClick={handleSignOut}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
+                            >
+                                <LogOut size={18} className="text-red-400" />
+                                <span className="font-nunito text-sm text-brand-brown">Cerrar sesión</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -167,78 +170,82 @@ export default function UserAccount({
             </button>
 
             {/* Desktop Dropdown Menu */}
-            <AnimatePresence>
-                {showUserMenu && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-soft-lg border border-brand-cream-dark overflow-hidden z-50"
-                    >
-                        {isAuthenticated ? (
-                            <>
-                                {/* User info header */}
-                                <div className="px-4 py-3 bg-brand-cream/30 border-b border-brand-cream-dark">
-                                    <p className="font-nunito font-semibold text-brand-brown text-sm truncate">
-                                        {userName}
-                                    </p>
-                                    <p className="font-nunito text-xs text-brand-brown/60 truncate">
-                                        {userEmail}
-                                    </p>
-                                </div>
-
-                                <div className="p-2">
-                                    {isAdmin ? (
-                                        <Link
-                                            href="/dashboard"
-                                            onClick={() => setShowUserMenu(false)}
-                                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
-                                        >
-                                            <LayoutDashboard size={18} className="text-pastel-purple" />
-                                            <span className="font-nunito text-sm text-brand-brown">Dashboard</span>
-                                        </Link>
-                                    ) : (
-                                        <Link
-                                            href="/favoritos"
-                                            onClick={() => setShowUserMenu(false)}
-                                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
-                                        >
-                                            <Heart size={18} className="text-pastel-purple" />
-                                            <span className="font-nunito text-sm text-brand-brown">Mis Favoritos</span>
-                                        </Link>
-                                    )}
-
-                                    <button
-                                        onClick={handleSignOut}
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
-                                    >
-                                        <LogOut size={18} className="text-red-400" />
-                                        <span className="font-nunito text-sm text-brand-brown">Cerrar sesión</span>
-                                    </button>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="p-4 text-center">
-                                <div className="mb-3">
-                                    <span className="text-3xl">🐱</span>
-                                </div>
-                                <p className="font-nunito text-sm text-brand-brown/70 mb-3">
-                                    Únete al Club Purrfect Glow y obtén beneficios exclusivos
+            {showUserMenu && (
+                <div
+                    className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-soft-lg border border-brand-cream-dark overflow-hidden z-50"
+                >
+                    {isAuthenticated ? (
+                        <>
+                            {/* User info header */}
+                            <div className="px-4 py-3 bg-brand-cream/30 border-b border-brand-cream-dark">
+                                <p className="font-nunito font-semibold text-brand-brown text-sm truncate">
+                                    {userName}
                                 </p>
-                                <Link
-                                    href="/login"
-                                    onClick={() => setShowUserMenu(false)}
-                                    className="block w-full py-2.5 rounded-xl font-nunito font-semibold text-white text-sm transition-colors"
-                                    style={{ backgroundColor: '#FFB559' }}
-                                >
-                                    Iniciar sesión
-                                </Link>
+                                <p className="font-nunito text-xs text-brand-brown/60 truncate">
+                                    {userEmail}
+                                </p>
                             </div>
-                        )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+
+                            <div className="p-2">
+                                {isAdmin ? (
+                                    <Link
+                                        href="/dashboard"
+                                        onClick={() => setShowUserMenu(false)}
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
+                                    >
+                                        <LayoutDashboard size={18} className="text-pastel-purple" />
+                                        <span className="font-nunito text-sm text-brand-brown">Dashboard</span>
+                                    </Link>
+                                ) : (
+                                    <Link
+                                        href="/favoritos"
+                                        onClick={() => setShowUserMenu(false)}
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-pink/20 transition-colors"
+                                    >
+                                        <Heart size={18} className="text-pastel-purple" />
+                                        <span className="font-nunito text-sm text-brand-brown">Mis Favoritos</span>
+                                    </Link>
+                                )}
+
+                                {/* Profile Link - Always visible for authenticated users */}
+                                <Link
+                                    href="/perfil"
+                                    onClick={() => setShowUserMenu(false)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pastel-blue/20 transition-colors"
+                                >
+                                    <User size={18} className="text-pastel-blue" />
+                                    <span className="font-nunito text-sm text-brand-brown">Mi Perfil</span>
+                                </Link>
+
+                                <button
+                                    onClick={handleSignOut}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
+                                >
+                                    <LogOut size={18} className="text-red-400" />
+                                    <span className="font-nunito text-sm text-brand-brown">Cerrar sesión</span>
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="p-4 text-center">
+                            <div className="mb-3">
+                                <span className="text-3xl">🐱</span>
+                            </div>
+                            <p className="font-nunito text-sm text-brand-brown/70 mb-3">
+                                Únete al Club Purrfect Glow y obtén beneficios exclusivos
+                            </p>
+                            <Link
+                                href="/login"
+                                onClick={() => setShowUserMenu(false)}
+                                className="block w-full py-2.5 rounded-xl font-nunito font-semibold text-white text-sm transition-colors"
+                                style={{ backgroundColor: '#FFB559' }}
+                            >
+                                Iniciar sesión
+                            </Link>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

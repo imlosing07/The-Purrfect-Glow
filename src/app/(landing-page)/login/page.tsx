@@ -1,9 +1,7 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 
 export default function LoginPage() {
     const handleGoogleSignIn = () => {
@@ -12,64 +10,11 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-[#FFF6E6] flex items-center justify-center px-4 py-12">
-            {/* Decorative Background Elements */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                <motion.div
-                    animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
-                    transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-                    className="absolute top-20 left-10 opacity-20"
-                >
-                    <Image src="/Elementos/Vector-49.png" alt="" width={80} height={60} />
-                </motion.div>
-                <motion.div
-                    animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
-                    transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut', delay: 1 }}
-                    className="absolute top-32 right-16 opacity-15"
-                >
-                    <Image src="/Elementos/Vector-50.png" alt="" width={60} height={45} />
-                </motion.div>
-                <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute bottom-1/4 left-1/4 text-2xl text-pastel-purple"
-                >
-                    ✦
-                </motion.div>
-                <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ repeat: Infinity, duration: 2, delay: 0.7 }}
-                    className="absolute top-1/3 right-1/4 text-xl text-pastel-pink"
-                >
-                    ★
-                </motion.div>
-            </div>
-
             {/* Main Card */}
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="relative bg-white rounded-[40px] shadow-soft-lg p-8 md:p-10 max-w-md w-full"
-            >
+            <div className="relative bg-white rounded-[40px] shadow-soft-lg p-8 md:p-10 max-w-md w-full">
                 {/* Cat Mascot */}
-                <div className="flex justify-center -mt-20 mb-4">
-                    <div className="relative">
-                        <Image
-                            src="/Elementos/Group 1697.png"
-                            alt="Purrfect Glow Mascot"
-                            width={100}
-                            height={100}
-                            className="drop-shadow-lg"
-                        />
-                        {/* Hearts decoration */}
-                        <motion.div
-                            animate={{ y: [0, -5, 0], scale: [1, 1.1, 1] }}
-                            transition={{ repeat: Infinity, duration: 1.5 }}
-                            className="absolute -top-2 -right-2 text-lg"
-                        >
-                            💕
-                        </motion.div>
-                    </div>
+                <div className="flex justify-center -mt-16 mb-4">
+                    <div className="text-6xl">🐱</div>
                 </div>
 
                 {/* Club Badge */}
@@ -176,7 +121,7 @@ export default function LoginPage() {
                 <p className="text-center text-xs text-brand-brown/40 font-nunito mt-4">
                     Al iniciar sesión, aceptas nuestros términos de servicio y política de privacidad.
                 </p>
-            </motion.div>
+            </div>
         </div>
     );
 }

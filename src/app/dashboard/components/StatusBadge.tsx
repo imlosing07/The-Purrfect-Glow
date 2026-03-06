@@ -8,23 +8,23 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<OrderStatus, { label: string; bg: string; text: string; icon: string }> = {
-    [OrderStatus.PENDING]: {
-        label: 'Pendiente',
+    [OrderStatus.PENDING_PAYMENT]: {
+        label: 'Pendiente de Pago',
         bg: 'bg-status-pending',
         text: 'text-brand-brown',
         icon: '⏳',
+    },
+    [OrderStatus.PAID]: {
+        label: 'Pagado',
+        bg: 'bg-emerald-100',
+        text: 'text-emerald-800',
+        icon: '💳',
     },
     [OrderStatus.SHIPPED]: {
         label: 'Enviado',
         bg: 'bg-status-shipped',
         text: 'text-blue-800',
         icon: '📦',
-    },
-    [OrderStatus.DELIVERED]: {
-        label: 'Entregado',
-        bg: 'bg-status-delivered',
-        text: 'text-green-800',
-        icon: '✅',
     },
 };
 
@@ -58,7 +58,7 @@ interface StatusSelectorProps {
 }
 
 export function StatusSelector({ currentStatus, onStatusChange, disabled = false }: StatusSelectorProps) {
-    const statuses: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.SHIPPED, OrderStatus.DELIVERED];
+    const statuses: OrderStatus[] = [OrderStatus.PENDING_PAYMENT, OrderStatus.PAID, OrderStatus.SHIPPED];
 
     return (
         <div className="flex gap-2 flex-wrap">

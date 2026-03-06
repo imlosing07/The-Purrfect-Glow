@@ -2,24 +2,34 @@
 // API de órdenes - POST para crear, GET para listar
 
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { createOrder, getOrders, getOrdersCountByStatus } from '@/src/services/order';
 import { OrderStatus } from '@/src/types';
 
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Debes iniciar sesión para realizar un pedido' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    
+
     // Validación básica
     const requiredFields = ['dni', 'fullName', 'phone', 'address', 'department', 'province', 'shippingZone', 'items'];
     const missingFields = requiredFields.filter(field => !body[field]);
-    
+
     if (missingFields.length > 0) {
       return NextResponse.json(
         { error: `Missing required fields: ${missingFields.join(', ')}` },
         { status: 400 }
       );
     }
-    
+
     if (!body.items?.length) {
       return NextResponse.json(
         { error: 'Order must have at least one item' },
@@ -27,8 +37,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await createOrder(body);
-    
+    // Pass userId from session
+    const result = await createOrder({
+      ...body,
+      userId: session.user.id,
+    });
+
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/orders:', error);
@@ -47,19 +61,19 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const countOnly = searchParams.get('countOnly') === 'true';
-    
+
     // Si solo se quiere el conteo por estado (para dashboard)
     if (countOnly) {
       const counts = await getOrdersCountByStatus();
       return NextResponse.json(counts);
     }
-    
+
     const result = await getOrders({
       status: status || undefined,
       page,
       limit
     });
-    
+
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error in GET /api/orders:', error);

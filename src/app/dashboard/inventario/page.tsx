@@ -1,96 +1,105 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Package } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Search, Package, AlertTriangle, Pencil, Plus, Minus, Loader2 } from 'lucide-react';
 import { Product } from '@/src/types';
-import ProductCard from '../components/ProductCard';
-import { ProductGridSkeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
+import StockModal from '../components/StockModal';
+
+// Sales data type (from dashboard stats API)
+interface ProductSalesMap {
+    [productId: string]: number;
+}
 
 export default function InventarioPage() {
+    const searchParams = useSearchParams();
+    const initialFilter = searchParams.get('filter');
+
     const [products, setProducts] = useState<Product[]>([]);
+    const [salesData, setSalesData] = useState<ProductSalesMap>({});
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
-    const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const [showLowStockOnly, setShowLowStockOnly] = useState(initialFilter === 'low-stock');
     const { showToast } = useToast();
 
-    // Fetch products
+    // Stock modal state
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState<'replenish' | 'adjust'>('replenish');
+    const [selectedProduct, setSelectedProduct] = useState<{ id: string; name: string; stock: number } | null>(null);
+
+    // Fetch products + sales data in parallel
     useEffect(() => {
-        async function fetchProducts() {
+        async function fetchData() {
             try {
-                const response = await fetch('/api/products?limit=50');
-                const data = await response.json();
-                setProducts(data.products || []);
+                const [productsRes, statsRes] = await Promise.all([
+                    fetch('/api/products?limit=100'),
+                    fetch('/api/dashboard/stats'),
+                ]);
+
+                const productsData = await productsRes.json();
+                setProducts(productsData.products || []);
+
+                if (statsRes.ok) {
+                    const statsData = await statsRes.json();
+                    // Build sales map from topSold (we need all products' sales though)
+                    const salesMap: ProductSalesMap = {};
+                    (statsData.topSold || []).forEach((item: any) => {
+                        salesMap[item.productId] = item.totalSold;
+                    });
+                    setSalesData(salesMap);
+                }
             } catch (error) {
-                console.error('Error fetching products:', error);
-                showToast('Error al cargar productos', 'error');
+                console.error('Error fetching data:', error);
+                showToast('Error al cargar datos', 'error');
             } finally {
                 setLoading(false);
             }
         }
-        fetchProducts();
+        fetchData();
     }, [showToast]);
 
-    // Toggle product availability
-    async function handleToggleAvailability(productId: string, currentState: boolean) {
-        setUpdatingId(productId);
-
-        try {
-            const response = await fetch(`/api/products/${productId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ toggleAvailability: true }),
-            });
-
-            if (!response.ok) throw new Error('Failed to update');
-
-            const updatedProduct = await response.json();
-
-            // Update local state
-            setProducts(prev =>
-                prev.map(p => p.id === productId ? updatedProduct : p)
-            );
-
-            showToast(
-                updatedProduct.isAvailable
-                    ? '¡Listo! Producto disponible 🌟'
-                    : 'Producto marcado como agotado'
-            );
-        } catch (error) {
-            console.error('Error updating product:', error);
-            showToast('Error al actualizar', 'error');
-        } finally {
-            setUpdatingId(null);
-        }
-    }
-
     // Filter products
-    const filteredProducts = products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesAvailable = !showOnlyAvailable || product.isAvailable;
-        return matchesSearch && matchesAvailable;
-    });
+    const filteredProducts = useMemo(() => {
+        return products.filter(product => {
+            const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesLowStock = !showLowStockOnly || product.stock < 5;
+            return matchesSearch && matchesLowStock;
+        });
+    }, [products, searchQuery, showLowStockOnly]);
 
     // Stats
-    const availableCount = products.filter(p => p.isAvailable).length;
-    const outOfStockCount = products.filter(p => !p.isAvailable).length;
+    const lowStockCount = useMemo(() => products.filter(p => p.stock < 5).length, [products]);
+
+    // Modal handlers
+    const openModal = (product: Product, mode: 'replenish' | 'adjust') => {
+        setSelectedProduct({ id: product.id, name: product.name, stock: product.stock });
+        setModalMode(mode);
+        setModalOpen(true);
+    };
+
+    const handleStockUpdate = (productId: string, newStock: number) => {
+        setProducts(prev =>
+            prev.map(p => p.id === productId ? { ...p, stock: newStock, isAvailable: newStock > 0 } : p)
+        );
+        showToast('Stock actualizado ✅');
+    };
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="font-baloo font-bold text-3xl text-brand-brown mb-2">
+            <div className="mb-6">
+                <h1 className="font-baloo font-bold text-3xl text-brand-brown mb-1">
                     Inventario 📦
                 </h1>
                 <p className="font-nunito text-brand-brown/70">
-                    Gestiona la disponibilidad de tus productos con un solo toque
+                    Gestiona el stock de tus productos
                 </p>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-white rounded-3xl p-4 shadow-soft">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-pastel-blue rounded-2xl">
@@ -103,34 +112,32 @@ export default function InventarioPage() {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-3xl p-4 shadow-soft">
+                <button
+                    onClick={() => setShowLowStockOnly(!showLowStockOnly)}
+                    className={`rounded-3xl p-4 shadow-soft text-left transition-all ${showLowStockOnly
+                        ? 'bg-gradient-to-br from-red-50 to-orange-50 ring-2 ring-red-200'
+                        : 'bg-white hover:bg-red-50'
+                        }`}
+                >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-pastel-green rounded-2xl">
-                            <span className="text-lg">✅</span>
+                        <div className={`p-2 rounded-2xl ${lowStockCount > 0 ? 'bg-red-100' : 'bg-pastel-green'}`}>
+                            <AlertTriangle size={20} className={lowStockCount > 0 ? 'text-red-500' : 'text-green-600'} />
                         </div>
                         <div>
-                            <p className="text-xs font-nunito text-brand-brown/60">Disponibles</p>
-                            <p className="font-baloo font-bold text-xl text-brand-brown">{availableCount}</p>
+                            <p className="text-xs font-nunito text-brand-brown/60">
+                                {showLowStockOnly ? 'Mostrando bajo stock' : 'Stock bajo'}
+                            </p>
+                            <p className={`font-baloo font-bold text-xl ${lowStockCount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                {lowStockCount}
+                            </p>
                         </div>
                     </div>
-                </div>
-
-                <div className="bg-white rounded-3xl p-4 shadow-soft col-span-2 md:col-span-1">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-status-pending rounded-2xl">
-                            <span className="text-lg">⏸️</span>
-                        </div>
-                        <div>
-                            <p className="text-xs font-nunito text-brand-brown/60">Agotados</p>
-                            <p className="font-baloo font-bold text-xl text-brand-brown">{outOfStockCount}</p>
-                        </div>
-                    </div>
-                </div>
+                </button>
             </div>
 
-            {/* Search & Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                <div className="relative flex-1">
+            {/* Search */}
+            <div className="mb-4">
+                <div className="relative">
                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-brown/40" />
                     <input
                         type="text"
@@ -138,57 +145,147 @@ export default function InventarioPage() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-11 pr-4 py-3 bg-white rounded-2xl border-0 shadow-soft
-              font-nunito text-brand-brown placeholder:text-brand-brown/40
-              focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 focus:ring-offset-brand-cream"
+                            font-nunito text-brand-brown placeholder:text-brand-brown/40
+                            focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 focus:ring-offset-brand-cream"
                     />
                 </div>
-
-                <button
-                    onClick={() => setShowOnlyAvailable(!showOnlyAvailable)}
-                    className={`
-            flex items-center gap-2 px-4 py-3 rounded-2xl font-nunito font-medium text-sm
-            transition-all duration-200
-            ${showOnlyAvailable
-                            ? 'bg-pastel-green text-green-800'
-                            : 'bg-white text-brand-brown/70 hover:bg-brand-cream shadow-soft'
-                        }
-          `}
-                >
-                    <Filter size={16} />
-                    Solo disponibles
-                </button>
             </div>
 
-            {/* Products List */}
+            {/* Products Table */}
             {loading ? (
-                <ProductGridSkeleton count={6} />
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-orange" />
+                </div>
+            ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-3xl shadow-soft">
+                    <span className="text-4xl mb-4 block">🔍</span>
+                    <p className="font-nunito text-brand-brown/60">
+                        {showLowStockOnly ? 'No hay productos con stock bajo 🎉' : 'No se encontraron productos'}
+                    </p>
+                </div>
             ) : (
-                <AnimatePresence mode="popLayout">
-                    <motion.div className="space-y-4">
-                        {filteredProducts.length === 0 ? (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="text-center py-12 bg-white rounded-3xl shadow-soft"
-                            >
-                                <span className="text-4xl mb-4 block">🔍</span>
-                                <p className="font-nunito text-brand-brown/60">
-                                    No se encontraron productos
-                                </p>
-                            </motion.div>
-                        ) : (
-                            filteredProducts.map((product) => (
-                                <ProductCard
+                <div className="bg-white rounded-3xl shadow-soft overflow-hidden">
+                    {/* Table Header */}
+                    <div className="hidden md:grid md:grid-cols-[1fr_80px_80px_100px_100px_50px] gap-4 px-6 py-3 bg-brand-cream/50 border-b border-brand-cream">
+                        <span className="font-nunito text-xs font-semibold text-brand-brown/60 uppercase tracking-wider">Producto</span>
+                        <span className="font-nunito text-xs font-semibold text-brand-brown/60 uppercase tracking-wider text-center">Stock</span>
+                        <span className="font-nunito text-xs font-semibold text-brand-brown/60 uppercase tracking-wider text-center">Ventas 30d</span>
+                        <span className="font-nunito text-xs font-semibold text-brand-brown/60 uppercase tracking-wider text-center">Reposición</span>
+                        <span className="font-nunito text-xs font-semibold text-brand-brown/60 uppercase tracking-wider text-center">Ajuste</span>
+                        <span className="font-nunito text-xs font-semibold text-brand-brown/60 uppercase tracking-wider text-center"></span>
+                    </div>
+
+                    {/* Table Body */}
+                    <div className="divide-y divide-brand-cream">
+                        {filteredProducts.map((product) => {
+                            const sales = salesData[product.id] || 0;
+                            const isLowStock = product.stock < 5;
+
+                            return (
+                                <div
                                     key={product.id}
-                                    product={product}
-                                    onToggleAvailability={handleToggleAvailability}
-                                    isUpdating={updatingId === product.id}
-                                />
-                            ))
-                        )}
-                    </motion.div>
-                </AnimatePresence>
+                                    className={`px-4 md:px-6 py-3 md:py-4 hover:bg-brand-cream/30 transition-colors ${isLowStock ? 'bg-red-50/50' : ''}`}
+                                >
+                                    {/* Desktop: grid row */}
+                                    <div className="hidden md:grid md:grid-cols-[1fr_80px_80px_100px_100px_50px] gap-4 items-center">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <p className="font-nunito font-medium text-sm text-brand-brown truncate">
+                                                {product.name}
+                                            </p>
+                                            {isLowStock && (
+                                                <span className="flex-shrink-0 px-1.5 py-0.5 bg-red-100 text-red-600 text-xs font-nunito font-medium rounded-full">
+                                                    ⚠️
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className={`font-baloo font-bold text-lg text-center ${isLowStock ? 'text-red-600' : 'text-brand-brown'}`}>
+                                            {product.stock}
+                                        </span>
+                                        <span className="font-nunito text-sm text-brand-brown/70 text-center">
+                                            {sales > 0 ? sales : '—'}
+                                        </span>
+                                        <div className="flex justify-center">
+                                            <button
+                                                onClick={() => openModal(product, 'replenish')}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-pastel-green/60 text-green-700 rounded-xl text-xs font-nunito font-semibold hover:bg-pastel-green transition-colors"
+                                            >
+                                                <Plus size={14} />
+                                                Agregar
+                                            </button>
+                                        </div>
+                                        <div className="flex justify-center">
+                                            <button
+                                                onClick={() => openModal(product, 'adjust')}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-pastel-blue/60 text-blue-700 rounded-xl text-xs font-nunito font-semibold hover:bg-pastel-blue transition-colors"
+                                            >
+                                                <Minus size={14} />
+                                                Ajustar
+                                            </button>
+                                        </div>
+                                        <div className="flex justify-center">
+                                            <Link
+                                                href={`/dashboard/inventario/${product.id}/editar`}
+                                                className="p-2 bg-brand-cream rounded-xl hover:bg-brand-yellow transition-colors group"
+                                                title="Editar producto"
+                                            >
+                                                <Pencil size={14} className="text-brand-brown/70 group-hover:text-brand-brown" />
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    {/* Mobile: compact row */}
+                                    <div className="md:hidden">
+                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                            <p className="font-nunito font-medium text-sm text-brand-brown truncate flex-1 min-w-0">
+                                                {product.name}
+                                            </p>
+                                            <span className={`font-baloo font-bold text-base flex-shrink-0 ${isLowStock ? 'text-red-600' : 'text-brand-brown'}`}>
+                                                {product.stock}
+                                                {isLowStock && <span className="ml-1 text-xs">⚠️</span>}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-nunito text-brand-brown/40 mr-auto">
+                                                {sales > 0 ? `${sales} vendidos` : ''}
+                                            </span>
+                                            <button
+                                                onClick={() => openModal(product, 'replenish')}
+                                                className="p-1.5 bg-pastel-green/60 text-green-700 rounded-lg hover:bg-pastel-green transition-colors"
+                                                title="Agregar stock"
+                                            >
+                                                <Plus size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => openModal(product, 'adjust')}
+                                                className="p-1.5 bg-pastel-blue/60 text-blue-700 rounded-lg hover:bg-pastel-blue transition-colors"
+                                                title="Ajustar stock"
+                                            >
+                                                <Minus size={14} />
+                                            </button>
+                                            <Link
+                                                href={`/dashboard/inventario/${product.id}/editar`}
+                                                className="p-1.5 bg-brand-cream rounded-lg hover:bg-brand-yellow transition-colors"
+                                                title="Editar producto"
+                                            >
+                                                <Pencil size={14} className="text-brand-brown/70" />
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
             )}
+
+            {/* Stock Modal */}
+            <StockModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                product={selectedProduct}
+                mode={modalMode}
+                onSuccess={handleStockUpdate}
+            />
         </div>
     );
 }

@@ -35,9 +35,9 @@ export default function OrderCard({ order, onStatusChange, isUpdating = false }:
                         <span className="font-baloo font-bold text-brand-brown">
                             Pedido #{order.id.slice(0, 8)}
                         </span>
-                        {order.whatsappLink && (
+                        {order.phone && (
                             <a
-                                href={order.whatsappLink}
+                                href={`https://api.whatsapp.com/send?phone=51${order.phone}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs bg-pastel-green text-green-800 px-2 py-0.5 rounded-full font-nunito hover:bg-green-200 transition-colors"
