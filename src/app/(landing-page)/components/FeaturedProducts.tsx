@@ -2,6 +2,7 @@ import { getFeaturedProducts } from '@/src/services/product';
 import ProductCard from '@/src/components/ProductCard';
 import Link from 'next/link';
 import Image from 'next/image';
+import { FaTiktok } from 'react-icons/fa';
 
 export default async function FeaturedProducts() {
     const products = await getFeaturedProducts(10); // Get up to 10 featured products
@@ -22,9 +23,9 @@ export default async function FeaturedProducts() {
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
                     <h2 className="font-baloo font-bold text-2xl md:text-3xl text-brand-brown">
-                        Productos Destacados
+                        TikTok Viral
                     </h2>
-                    <span className="text-2xl">✨</span>
+                    <FaTiktok className="text-brand-brown text-xl md:text-2xl" />
                 </div>
                 <Link
                     href="/catalogo"
